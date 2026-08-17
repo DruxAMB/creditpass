@@ -626,15 +626,18 @@ export default function Home() {
                     value={txHashInput}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTxHashInput(e.target.value)}
                     disabled={isVerifying}
-                    className="font-label text-sm w-full px-4 py-3 pill border border-ink-black bg-paper-white focus:outline-none focus:border-2 disabled:opacity-50"
+                    className={`font-label text-sm w-full px-4 py-3 pill border border-ink-black bg-paper-white focus:outline-none focus:border-2 disabled:opacity-50 ${txHashInput.trim() && !/^0x[a-fA-F0-9]{64}$/.test(txHashInput.trim()) ? "border-destructive border-2" : ""}`}
                   />
+                  {txHashInput.trim() && !/^0x[a-fA-F0-9]{64}$/.test(txHashInput.trim()) && (
+                    <p className="mt-1.5 font-label text-xs text-destructive">Invalid format — must be 0x followed by 64 hex characters.</p>
+                  )}
                 </div>
 
                 {creditScore === 0 ? (
                   <button
                     onClick={() => handleImportRepayment()}
-                    disabled={isVerifying}
-                    className="mt-4 w-full font-ui text-base uppercase tracking-[0.1em] px-6 py-3 pill bg-eclipse-green text-ink-black border border-ink-black hover:border-2 transition-all disabled:opacity-50"
+                    disabled={isVerifying || (!!txHashInput.trim() && !/^0x[a-fA-F0-9]{64}$/.test(txHashInput.trim()))}
+                    className="mt-4 w-full font-ui text-base uppercase tracking-[0.1em] px-6 py-3 pill bg-eclipse-green text-ink-black border border-ink-black hover:border-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {isVerifying ? (
                       <><Loader2 className="h-4 w-4 animate-spin inline mr-2" />Verifying...</>
@@ -647,7 +650,7 @@ export default function Home() {
                     <button
                       onClick={handleTakeLoan}
                       disabled={isTakingLoan || (walletAddress ? wrongChain : false)}
-                      className="flex-1 font-ui text-base uppercase tracking-[0.1em] px-6 py-3 pill bg-eclipse-green text-ink-black border border-ink-black hover:border-2 transition-all disabled:opacity-50"
+                      className="flex-1 font-ui text-base uppercase tracking-[0.1em] px-6 py-3 pill bg-eclipse-green text-ink-black border border-ink-black hover:border-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {isTakingLoan ? (
                         <><Loader2 className="h-4 w-4 animate-spin inline mr-2" />Issuing...</>
@@ -657,8 +660,8 @@ export default function Home() {
                     </button>
                     <button
                       onClick={() => handleImportRepayment()}
-                      disabled={isVerifying}
-                      className="font-ui text-base uppercase tracking-[0.1em] px-6 py-3 pill bg-paper-white text-ink-black border border-ink-black hover:bg-eclipse-green transition-colors disabled:opacity-50"
+                      disabled={isVerifying || (!!txHashInput.trim() && !/^0x[a-fA-F0-9]{64}$/.test(txHashInput.trim()))}
+                      className="font-ui text-base uppercase tracking-[0.1em] px-6 py-3 pill bg-paper-white text-ink-black border border-ink-black hover:bg-eclipse-green transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {isVerifying ? (
                         <Loader2 className="h-4 w-4 animate-spin inline" />
