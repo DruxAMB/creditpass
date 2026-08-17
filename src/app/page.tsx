@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect, useRef } from "react";
+import React, { useState, useCallback, useEffect, useRef } from "react";
 import {
   ShieldCheck,
   TrendingUp,
@@ -22,6 +22,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
 
 type VerificationStep = {
   label: string;
@@ -58,6 +59,9 @@ export default function Home() {
   const [verifyError, setVerifyError] = useState<string | null>(null);
   const [scoreAnimating, setScoreAnimating] = useState(false);
   const [showHero, setShowHero] = useState(true);
+  const [txHashInput, setTxHashInput] = useState("");
+  const [isTakingLoan, setIsTakingLoan] = useState(false);
+  const [loanError, setLoanError] = useState<string | null>(null);
   const liveRegionRef = useRef<HTMLDivElement>(null);
   const dashboardRef = useRef<HTMLDivElement>(null);
 
@@ -113,7 +117,14 @@ export default function Home() {
     }, 100);
   }
 
-  const handleImportRepayment = useCallback(async () => {
+  const handleImportRepayment = useCallback(async (customTxHash?: string) => {
+    const txHash = customTxHash || txHashInput.trim() || "0xc209d676ae17e2f2d938535561aab96bab772b69fdadcc11918d9d2b945bf79e";
+
+    if (txHashInput.trim() && !/^0x[a-fA-F0-9]{64}$/.test(txHash)) {
+      setVerifyError("Invalid transaction hash. Must be 0x followed by 64 hex characters.");
+      return;
+    }
+
     setIsVerifying(true);
     setVerifyError(null);
     setVerificationSteps([
@@ -125,8 +136,6 @@ export default function Home() {
       { label: "Updating credit score on-chain", status: "pending" },
     ]);
     announce("Starting cross-chain verification via Attestcoin Protocol.");
-
-    const txHash = "0xc209d676ae17e2f2d938535561aab96bab772b69fdadcc11918d9d2b945bf79e";
 
     await sleep(800);
     setVerificationSteps((prev) => [
@@ -188,18 +197,47 @@ export default function Home() {
 
     await sleep(500);
     setIsVerifying(false);
-  }, []);
+  }, [txHashInput]);
 
   const handleTakeLoan = useCallback(async () => {
-    const newLoan: LoanRecord = {
-      loanId: loans.length,
-      principal: "50 tCTC",
-      interestRate: "8%",
-      collateral: "25 tCTC",
-      status: "active",
-    };
-    setLoans((prev) => [...prev, newLoan]);
-  }, [loans.length]);
+    setIsTakingLoan(true);
+    setLoanError(null);
+    announce("Submitting loan request on Creditcoin...");
+
+    try {
+      const response = await fetch("/api/take-loan", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          borrowAmount: loanTerms.maxBorrow.replace(/[^0-9.]/g, ""),
+          durationDays: 30,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to take loan");
+      }
+
+      const newLoan: LoanRecord = {
+        loanId: data.loanId,
+        principal: `${data.principal} tCTC`,
+        interestRate: data.interestRate,
+        collateral: `${data.collateral} tCTC`,
+        status: "active",
+      };
+      setLoans((prev) => [...prev, newLoan]);
+      announce(`Loan #${data.loanId} issued on Creditcoin at ${data.interestRate} APR.`);
+    } catch (err) {
+      console.error("Take loan failed:", err);
+      const msg = err instanceof Error ? err.message : "Failed to take loan";
+      setLoanError(msg);
+      announce(`Loan failed: ${msg}`);
+    } finally {
+      setIsTakingLoan(false);
+    }
+  }, [loanTerms.maxBorrow]);
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -241,7 +279,7 @@ export default function Home() {
                   <ArrowDown className="h-4 w-4" />
                 </Button>
                 <Button
-                  onClick={() => window.open("https://github.com/your-repo/creditpass", "_blank")}
+                  onClick={() => window.open("https://github.com/DruxAMB/creditpass", "_blank")}
                   variant="outline"
                   size="lg"
                   className="min-h-[44px]"
@@ -317,6 +355,22 @@ export default function Home() {
                 <p className="text-xs text-muted-foreground">{verifyError}</p>
               </div>
               <Button onClick={() => setVerifyError(null)} variant="ghost" size="sm">
+                Dismiss
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Loan error state */}
+        {loanError && !isTakingLoan && (
+          <Card className="mb-6 border-destructive/30 bg-destructive/5 animate-in">
+            <CardContent className="flex items-center gap-3 pt-6">
+              <AlertCircle className="h-5 w-5 text-destructive" aria-hidden="true" />
+              <div className="flex-1">
+                <p className="text-sm font-medium">Loan failed</p>
+                <p className="text-xs text-muted-foreground">{loanError}</p>
+              </div>
+              <Button onClick={() => setLoanError(null)} variant="ghost" size="sm">
                 Dismiss
               </Button>
             </CardContent>
@@ -411,11 +465,27 @@ export default function Home() {
                     </div>
                   </div>
 
+                  {/* Tx hash input */}
+                  <div className="mt-4">
+                    <label htmlFor="txhash" className="mb-1.5 block text-xs text-muted-foreground">
+                      Sepolia tx hash (optional — defaults to demo tx)
+                    </label>
+                    <Input
+                      id="txhash"
+                      type="text"
+                      placeholder="0x..."
+                      value={txHashInput}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTxHashInput(e.target.value)}
+                      disabled={isVerifying}
+                      className="font-mono text-sm"
+                    />
+                  </div>
+
                   {creditScore === 0 ? (
                     <Button
-                      onClick={handleImportRepayment}
+                      onClick={() => handleImportRepayment()}
                       disabled={isVerifying}
-                      className="mt-4 w-full min-h-[44px]"
+                      className="mt-3 w-full min-h-[44px]"
                       size="lg"
                     >
                       {isVerifying ? (
@@ -431,32 +501,40 @@ export default function Home() {
                       )}
                     </Button>
                   ) : (
-                    <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+                    <div className="mt-3 flex flex-col gap-2 sm:flex-row">
                       <Button
                         onClick={handleTakeLoan}
+                        disabled={isTakingLoan}
                         className="flex-1 min-h-[44px]"
                         size="lg"
                       >
-                        Take Loan at {loanTerms.interestRate}
-                        <ArrowRight className="h-4 w-4" />
-                      </Button>
-                      {verifiedRepayments < 2 ? (
-                        <Button
-                          onClick={handleImportRepayment}
-                          disabled={isVerifying}
-                          variant="outline"
-                          className="min-h-[44px]"
-                        >
-                          {isVerifying ? (
+                        {isTakingLoan ? (
+                          <>
                             <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            <>
-                              <Sparkles className="h-4 w-4" />
-                              Import More
-                            </>
-                          )}
-                        </Button>
-                      ) : null}
+                            Issuing on Creditcoin...
+                          </>
+                        ) : (
+                          <>
+                            Take Loan at {loanTerms.interestRate}
+                            <ArrowRight className="h-4 w-4" />
+                          </>
+                        )}
+                      </Button>
+                      <Button
+                        onClick={() => handleImportRepayment()}
+                        disabled={isVerifying}
+                        variant="outline"
+                        className="min-h-[44px]"
+                      >
+                        {isVerifying ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <>
+                            <Sparkles className="h-4 w-4" />
+                            Import More
+                          </>
+                        )}
+                      </Button>
                     </div>
                   )}
                 </>
