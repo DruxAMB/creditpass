@@ -61,6 +61,7 @@ export default function Home() {
   const [txHashInput, setTxHashInput] = useState("");
   const [isTakingLoan, setIsTakingLoan] = useState(false);
   const [loanError, setLoanError] = useState<string | null>(null);
+  const [loanSuccess, setLoanSuccess] = useState<string | null>(null);
   const [walletError, setWalletError] = useState<string | null>(null);
   const [hasWallet, setHasWallet] = useState(false);
   const liveRegionRef = useRef<HTMLDivElement>(null);
@@ -337,7 +338,9 @@ export default function Home() {
           status: "active",
         };
         setLoans((prev) => [...prev, newLoan]);
+        setLoanSuccess(`Loan #${loanId} issued successfully at ${Number(loanData[2]) / 100}% APR on Creditcoin.`);
         announce(`Loan #${loanId} issued on Creditcoin at ${Number(loanData[2]) / 100}% APR.`);
+        setActiveTab("loans");
       } catch (err) {
         console.error("Take loan (client-side) failed:", err);
         const msg = friendlyError(err, "Taking loan");
@@ -383,7 +386,9 @@ export default function Home() {
         status: "active",
       };
       setLoans((prev) => [...prev, newLoan]);
+      setLoanSuccess(`Loan #${data.loanId} issued successfully at ${data.interestRate} APR on Creditcoin.`);
       announce(`Loan #${data.loanId} issued on Creditcoin at ${data.interestRate} APR.`);
+      setActiveTab("loans");
     } catch (err) {
       console.error("Take loan failed:", err);
       const msg = friendlyError(err, "Taking loan");
@@ -541,6 +546,7 @@ export default function Home() {
               setTxHashInput("");
               setVerifyError(null);
               setLoanError(null);
+              setLoanSuccess(null);
               setLoadError(null);
             }, 500);
           }}
@@ -588,6 +594,19 @@ export default function Home() {
               <p className="font-ui text-sm text-muted-foreground">{verifyError}</p>
             </div>
             <button onClick={() => setVerifyError(null)} className="font-ui text-xs uppercase tracking-[0.1em] px-3 py-1 pill border border-ink-black hover:bg-eclipse-green transition-colors">
+              Dismiss
+            </button>
+          </div>
+        )}
+
+        {loanSuccess && !isTakingLoan && (
+          <div className="mb-6 flex items-center gap-3 p-5 pill border border-ink-black bg-eclipse-green animate-in">
+            <CheckCircle2 className="h-5 w-5 text-ink-black shrink-0" aria-hidden="true" />
+            <div className="flex-1">
+              <p className="font-ui text-sm font-bold uppercase tracking-wide">Loan Issued</p>
+              <p className="font-ui text-sm text-ink-black">{loanSuccess}</p>
+            </div>
+            <button onClick={() => setLoanSuccess(null)} className="font-ui text-xs uppercase tracking-[0.1em] px-3 py-1 pill border border-ink-black hover:bg-ink-black hover:text-paper-white transition-colors">
               Dismiss
             </button>
           </div>
