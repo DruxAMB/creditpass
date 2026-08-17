@@ -54,6 +54,7 @@ export default function Home() {
   const [showHero, setShowHero] = useState(true);
   const [heroExiting, setHeroExiting] = useState(false);
   const [demoMode, setDemoMode] = useState(false);
+  const [activeTab, setActiveTab] = useState<"repayments" | "loans">("repayments");
   const [txHashInput, setTxHashInput] = useState("");
   const [isTakingLoan, setIsTakingLoan] = useState(false);
   const [loanError, setLoanError] = useState<string | null>(null);
@@ -154,6 +155,8 @@ export default function Home() {
           return;
         }
         await eth.request({ method: "eth_requestAccounts" });
+        // Wait for wagmi to pick up the new connection
+        await new Promise((r) => setTimeout(r, 500));
       } catch (err) {
         const msg = friendlyError(err, "Connecting wallet");
         setWalletError(msg);
@@ -389,7 +392,7 @@ export default function Home() {
   }, [loanTerms.maxBorrow, walletAddress, connectorClient, demoMode]);
 
   return (
-    <div className="min-h-screen bg-paper-white text-ink-black">
+    <div className="min-h-screen bg-ink-black text-paper-white">
       {/* Live region for screen readers */}
       <div ref={liveRegionRef} aria-live="polite" aria-atomic="true" className="sr-only" />
 
@@ -713,22 +716,22 @@ export default function Home() {
 
         {/* Verification progress */}
         {isVerifying && (
-          <div className="mb-20 p-8 pill border border-ink-black bg-eclipse-green/10 animate-in">
-            <div className="eyebrow text-ink-black mb-2">Attestcoin Protocol Verification</div>
-            <p className="font-ui text-sm text-muted-foreground mb-6">
+          <div className="mb-20 p-8 pill border border-paper-white bg-eclipse-green/20 animate-in">
+            <div className="eyebrow text-paper-white mb-2">Attestcoin Protocol Verification</div>
+            <p className="font-ui text-sm text-paper-white/70 mb-6">
               Cryptographically verifying your Sepolia repayment on Creditcoin — no oracle required.
             </p>
             <div className="space-y-3">
               {verificationSteps.map((step, i) => (
                 <div key={i} className="flex items-center gap-3">
                   {step.status === "done" ? (
-                    <CheckCircle2 className="h-5 w-5 text-ink-black" aria-hidden="true" />
+                    <CheckCircle2 className="h-5 w-5 text-eclipse-green" aria-hidden="true" />
                   ) : step.status === "active" ? (
-                    <Loader2 className="h-5 w-5 animate-spin text-ink-black" aria-hidden="true" />
+                    <Loader2 className="h-5 w-5 animate-spin text-eclipse-green" aria-hidden="true" />
                   ) : (
-                    <div className="h-5 w-5 rounded-full border-2 border-ink-black/30" aria-hidden="true" />
+                    <div className="h-5 w-5 rounded-full border-2 border-paper-white/30" aria-hidden="true" />
                   )}
-                  <span className={`font-ui text-sm ${step.status === "done" ? "text-muted-foreground line-through" : step.status === "active" ? "font-bold" : "text-muted-foreground/50"}`}>
+                  <span className={`font-ui text-sm ${step.status === "done" ? "text-paper-white/50 line-through" : step.status === "active" ? "font-bold text-paper-white" : "text-paper-white/40"}`}>
                     {step.label}
                   </span>
                 </div>
@@ -740,7 +743,7 @@ export default function Home() {
         {/* How it works — 3 step cards */}
         <div className="mb-20">
           <div className="text-center mb-10">
-            <div className="eyebrow text-ink-black">How It Works</div>
+            <div className="eyebrow text-paper-white">How It Works</div>
           </div>
           <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
             <div className="p-8 pill border border-ink-black bg-paper-white">
@@ -769,17 +772,23 @@ export default function Home() {
 
         {/* Tabs — Repayment History / Active Loans */}
         <div className="mb-20">
-          <div className="flex gap-2 mb-6 border-b border-ink-black">
-            <button className="font-ui text-sm uppercase tracking-[0.1em] px-5 py-3 border-b-2 border-ink-black font-bold">
+          <div className="flex gap-2 mb-6 border-b border-paper-white text-paper-white">
+            <button
+              onClick={() => setActiveTab("repayments")}
+              className={`font-ui text-sm uppercase tracking-[0.1em] px-5 py-3 border-b-2 ${activeTab === "repayments" ? "border-paper-white font-bold" : "border-transparent text-paper-white/50 hover:text-paper-white"}`}
+            >
               Repayment History
             </button>
-            <button className="font-ui text-sm uppercase tracking-[0.1em] px-5 py-3 border-b-2 border-transparent text-muted-foreground hover:text-ink-black">
+            <button
+              onClick={() => setActiveTab("loans")}
+              className={`font-ui text-sm uppercase tracking-[0.1em] px-5 py-3 border-b-2 ${activeTab === "loans" ? "border-paper-white font-bold" : "border-transparent text-paper-white/50 hover:text-paper-white"}`}
+            >
               Active Loans
             </button>
           </div>
 
           {/* Repayment History tab content */}
-          <div>
+          <div className={activeTab === "repayments" ? "" : "hidden"}>
             {isLoading ? (
               <div className="space-y-3">
                 <div className="skeleton h-20" />
@@ -787,9 +796,9 @@ export default function Home() {
                 <div className="skeleton h-20" />
               </div>
             ) : repaymentHistory.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-16 text-center p-8 pill border border-ink-black">
-                <Clock className="mb-3 h-8 w-8 text-muted-foreground/50" aria-hidden="true" />
-                <p className="font-ui text-sm text-muted-foreground">
+              <div className="flex flex-col items-center justify-center py-16 text-center p-8 pill border border-paper-white">
+                <Clock className="mb-3 h-8 w-8 text-paper-white/30" aria-hidden="true" />
+                <p className="font-ui text-sm text-paper-white/60">
                   No repayments verified yet. Import your repayment history to build your credit score.
                 </p>
               </div>
@@ -827,34 +836,43 @@ export default function Home() {
             )}
           </div>
 
-          {/* Active Loans (always rendered, hidden via CSS) */}
-          {loans.length > 0 && (
-            <div className="mt-6 space-y-3">
-              {loans.map((loan, i) => (
-                <div
-                  key={i}
-                  className="flex flex-col gap-3 p-5 pill border border-ink-black bg-paper-white sm:flex-row sm:items-center sm:justify-between"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-ink-black">
-                      <Coins className="h-5 w-5 text-ink-black" aria-hidden="true" />
-                    </div>
-                    <div>
-                      <div className="font-ui text-sm font-bold">
-                        Borrowed {loan.principal}
+          {/* Active Loans tab content */}
+          <div className={activeTab === "loans" ? "" : "hidden"}>
+            {loans.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-16 text-center p-8 pill border border-paper-white">
+                <Coins className="mb-3 h-8 w-8 text-paper-white/30" aria-hidden="true" />
+                <p className="font-ui text-sm text-paper-white/60">
+                  No active loans. Take a loan to see it here.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {loans.map((loan, i) => (
+                  <div
+                    key={i}
+                    className="flex flex-col gap-3 p-5 pill border border-ink-black bg-paper-white sm:flex-row sm:items-center sm:justify-between"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-ink-black">
+                        <Coins className="h-5 w-5 text-ink-black" aria-hidden="true" />
                       </div>
-                      <div className="font-label text-xs text-muted-foreground">
-                        Loan #{loan.loanId} · {loan.interestRate} APR · Collateral: {loan.collateral}
+                      <div>
+                        <div className="font-ui text-sm font-bold">
+                          Borrowed {loan.principal}
+                        </div>
+                        <div className="font-label text-xs text-muted-foreground">
+                          Loan #{loan.loanId} · {loan.interestRate} APR · Collateral: {loan.collateral}
+                        </div>
                       </div>
                     </div>
+                    <span className="font-ui text-xs uppercase tracking-[0.1em] px-3 py-1 pill border border-ink-black">
+                      {loan.status === "active" ? "Active" : "Repaid"}
+                    </span>
                   </div>
-                  <span className="font-ui text-xs uppercase tracking-[0.1em] px-3 py-1 pill border border-ink-black">
-                    {loan.status === "active" ? "Active" : "Repaid"}
-                  </span>
-                </div>
-              ))}
-            </div>
-          )}
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </main>
       )}
