@@ -413,8 +413,8 @@ export default function Home() {
 
       {/* Hero — full-bleed black band with hairline serif headline */}
       {showHero && (
-        <section className={`bg-ink-black text-paper-white ${heroExiting ? "hero-exit" : "animate-in"}`}>
-          <div className="mx-auto max-w-[1200px] px-5 min-h-[calc(100vh-65px)] flex flex-col items-center justify-center text-center py-20">
+        <section className={`bg-ink-black text-paper-white flex flex-col ${heroExiting ? "hero-exit" : "animate-in"}`}>
+          <div className="flex-1 flex flex-col items-center justify-center text-center px-5 py-20 min-h-[calc(100vh-65px)]">
             <span className="eyebrow text-paper-white mb-6">CreditPass is</span>
             <h1 className="font-heading font-light leading-[0.85] tracking-[-0.04em] text-5xl md:text-7xl lg:text-8xl">
               Your Ethereum Repayments
@@ -445,39 +445,38 @@ export default function Home() {
               Demo uses sample data · Connect &amp; Borrow uses your wallet
             </p>
           </div>
+
+          {/* Marquee at bottom of hero */}
+          <div className="border-t border-paper-white/20 overflow-hidden py-4 mt-8">
+            <div className="flex gap-8 font-ui text-xl font-bold uppercase tracking-tight whitespace-nowrap animate-marquee text-paper-white/80">
+              <span>Cross-Chain Credit</span>
+              <span>—</span>
+              <span>No Oracle Required</span>
+              <span>—</span>
+              <span>Attestcoin Protocol</span>
+              <span>—</span>
+              <span>Cryptographic Proof</span>
+              <span>—</span>
+              <span>Creditcoin Testnet</span>
+              <span>—</span>
+              <span>Cross-Chain Credit</span>
+              <span>—</span>
+              <span>No Oracle Required</span>
+              <span>—</span>
+              <span>Attestcoin Protocol</span>
+              <span>—</span>
+              <span>Cryptographic Proof</span>
+              <span>—</span>
+              <span>Creditcoin Testnet</span>
+              <span>—</span>
+            </div>
+          </div>
         </section>
       )}
 
-      {/* Marquee strip — only after hero is gone */}
+      {/* Dashboard — only rendered after hero exit */}
       {!showHero && (
-        <div className="border-y border-ink-black overflow-hidden py-4 dashboard-enter">
-          <div className="flex gap-8 font-ui text-2xl font-bold uppercase tracking-tight whitespace-nowrap animate-marquee">
-            <span>Cross-Chain Credit</span>
-            <span>—</span>
-            <span>No Oracle Required</span>
-            <span>—</span>
-            <span>Attestcoin Protocol</span>
-            <span>—</span>
-            <span>Cryptographic Proof</span>
-            <span>—</span>
-            <span>Creditcoin Testnet</span>
-            <span>—</span>
-            <span>Cross-Chain Credit</span>
-            <span>—</span>
-            <span>No Oracle Required</span>
-            <span>—</span>
-            <span>Attestcoin Protocol</span>
-            <span>—</span>
-            <span>Cryptographic Proof</span>
-            <span>—</span>
-            <span>Creditcoin Testnet</span>
-            <span>—</span>
-          </div>
-        </div>
-      )}
-
-      {/* Dashboard */}
-      <main ref={dashboardRef} className={`mx-auto max-w-[1200px] px-5 py-20 ${!showHero ? "dashboard-enter" : ""}`}>
+      <main ref={dashboardRef} className="mx-auto max-w-[1200px] px-5 py-20 dashboard-enter">
         {/* Error states */}
         {walletError && (
           <div className="mb-6 flex items-center gap-3 p-5 pill border border-ink-black bg-paper-white animate-in">
@@ -813,37 +812,7 @@ export default function Home() {
           )}
         </div>
       </main>
-
-      {/* Footer — full-bleed black band */}
-      <footer className="bg-ink-black text-paper-white">
-        <div className="mx-auto max-w-[1200px] px-5 py-20">
-          <div className="flex flex-col md:flex-row justify-between gap-10">
-            <div>
-              <div className="font-ui text-2xl font-bold uppercase tracking-tight mb-4">CreditPass</div>
-              <p className="font-ui text-sm text-paper-white/60 max-w-xs">
-                Cross-chain credit passport powered by the Attestcoin Protocol.
-              </p>
-            </div>
-            <div className="flex flex-col gap-3">
-              <div className="eyebrow text-paper-white mb-2">Links</div>
-              <a href="https://github.com/DruxAMB/creditpass" target="_blank" rel="noopener noreferrer" className="font-ui text-sm uppercase tracking-[0.1em] hover:text-eclipse-green transition-colors">
-                GitHub →
-              </a>
-              <a href="https://creditcoin-testnet.blockscout.com" target="_blank" rel="noopener noreferrer" className="font-ui text-sm uppercase tracking-[0.1em] hover:text-eclipse-green transition-colors">
-                Blockscout →
-              </a>
-              <a href="https://www.attestcoin.com" target="_blank" rel="noopener noreferrer" className="font-ui text-sm uppercase tracking-[0.1em] hover:text-eclipse-green transition-colors">
-                Attestcoin Protocol →
-              </a>
-            </div>
-          </div>
-          <div className="mt-16 pt-8 border-t border-paper-white/20">
-            <p className="font-label text-xs text-paper-white/40 uppercase tracking-[0.2em]">
-              Built for Creditcoin Hackathon · 2025
-            </p>
-          </div>
-        </div>
-      </footer>
+      )}
     </div>
   );
 }
