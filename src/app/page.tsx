@@ -40,6 +40,8 @@ type LoanRecord = {
 };
 
 export default function Home() {
+  const STORAGE_KEY = "creditpass_data";
+
   const [creditScore, setCreditScore] = useState(0);
   const [verifiedRepayments, setVerifiedRepayments] = useState(0);
   const [totalVerifiedAmount, setTotalVerifiedAmount] = useState("0");
@@ -81,6 +83,69 @@ export default function Home() {
     setHasWallet(!!eth);
   }, []);
 
+  // Load persisted data from localStorage on mount or when wallet/demoMode changes
+  const storageId = demoMode ? "demo" : walletAddress || "";
+
+  const loadFromStorage = useCallback((id: string) => {
+    try {
+      const raw = localStorage.getItem(`${STORAGE_KEY}_${id}`);
+      if (!raw) return null;
+      return JSON.parse(raw);
+    } catch {
+      return null;
+    }
+  }, []);
+
+  const saveToStorage = useCallback((id: string, data: {
+    creditScore: number;
+    verifiedRepayments: number;
+    totalVerifiedAmount: string;
+    repaymentHistory: RepaymentRecord[];
+    loans: LoanRecord[];
+    hasImported: boolean;
+  }) => {
+    try {
+      localStorage.setItem(`${STORAGE_KEY}_${id}`, JSON.stringify(data));
+    } catch {
+      // ignore quota errors
+    }
+  }, []);
+
+  // Restore from localStorage when entering dashboard
+  useEffect(() => {
+    if (showHero || !storageId) return;
+    const saved = loadFromStorage(storageId);
+    if (saved) {
+      setCreditScore(saved.creditScore ?? 0);
+      setVerifiedRepayments(saved.verifiedRepayments ?? 0);
+      setTotalVerifiedAmount(saved.totalVerifiedAmount ?? "0");
+      setRepaymentHistory(saved.repaymentHistory ?? []);
+      setLoans(saved.loans ?? []);
+      setHasImported(saved.hasImported ?? false);
+      setIsLoading(false);
+    } else {
+      setCreditScore(0);
+      setVerifiedRepayments(0);
+      setTotalVerifiedAmount("0");
+      setRepaymentHistory([]);
+      setLoans([]);
+      setHasImported(false);
+    }
+  }, [storageId, showHero, loadFromStorage]);
+
+  // Persist to localStorage whenever dashboard data changes
+  useEffect(() => {
+    if (showHero || !storageId) return;
+    saveToStorage(storageId, {
+      creditScore,
+      verifiedRepayments,
+      totalVerifiedAmount,
+      repaymentHistory,
+      loans,
+      hasImported,
+    });
+  }, [creditScore, verifiedRepayments, totalVerifiedAmount, repaymentHistory, loans, hasImported, storageId, showHero, saveToStorage]);
+
   // Load existing credit score on mount or when wallet changes
   const loadScore = useCallback(async () => {
     setIsLoading(true);
@@ -91,6 +156,23 @@ export default function Home() {
         setIsLoading(false);
         return;
       }
+
+      // Check localStorage first — if we have persisted data, use it
+      const id = demoMode ? "demo" : walletAddress || "";
+      if (id) {
+        const saved = loadFromStorage(id);
+        if (saved && saved.hasImported) {
+          setCreditScore(saved.creditScore ?? 0);
+          setVerifiedRepayments(saved.verifiedRepayments ?? 0);
+          setTotalVerifiedAmount(saved.totalVerifiedAmount ?? "0");
+          setRepaymentHistory(saved.repaymentHistory ?? []);
+          setLoans(saved.loans ?? []);
+          setHasImported(saved.hasImported ?? false);
+          setIsLoading(false);
+          return;
+        }
+      }
+
       const params = walletAddress ? `?address=${walletAddress}` : "";
       const res = await fetch(`/api/credit-score${params}`);
       if (!res.ok) {
@@ -120,7 +202,7 @@ export default function Home() {
     } finally {
       setIsLoading(false);
     }
-  }, [walletAddress, demoMode]);
+  }, [walletAddress, demoMode, loadFromStorage]);
 
   useEffect(() => {
     loadScore();
@@ -537,12 +619,6 @@ export default function Home() {
               setHeroExiting(false);
               setDashboardExiting(false);
               setDemoMode(false);
-              setCreditScore(0);
-              setVerifiedRepayments(0);
-              setTotalVerifiedAmount("0");
-              setRepaymentHistory([]);
-              setLoans([]);
-              setHasImported(false);
               setTxHashInput("");
               setVerifyError(null);
               setLoanError(null);
