@@ -57,6 +57,7 @@ export default function Home() {
   const [isTakingLoan, setIsTakingLoan] = useState(false);
   const [loanError, setLoanError] = useState<string | null>(null);
   const [walletError, setWalletError] = useState<string | null>(null);
+  const [hasWallet, setHasWallet] = useState(false);
   const liveRegionRef = useRef<HTMLDivElement>(null);
   const dashboardRef = useRef<HTMLDivElement>(null);
 
@@ -67,6 +68,12 @@ export default function Home() {
   const { disconnect } = useDisconnect();
   const { data: connectorClient } = useConnectorClient();
   const wrongChain = !!walletAddress && chainId !== creditCoin3Testnet.id;
+
+  // Detect if a wallet extension is available
+  useEffect(() => {
+    const eth = (window as unknown as { ethereum?: unknown }).ethereum;
+    setHasWallet(!!eth);
+  }, []);
 
   // Load existing credit score on mount or when wallet changes
   const loadScore = useCallback(async () => {
@@ -413,7 +420,7 @@ export default function Home() {
 
       {/* Hero — full-bleed black band with hairline serif headline */}
       {showHero && (
-        <section className={`bg-ink-black text-paper-white flex flex-col min-h-[calc(100vh-65px)] ${heroExiting ? "hero-exit" : "animate-in"}`}>
+        <section className={`bg-ink-black text-paper-white flex flex-col min-h-[calc(100vh-70px)] ${heroExiting ? "hero-exit" : "animate-in"}`}>
           <div className="flex-1 flex flex-col items-center justify-center text-center px-5 py-12">
             <span className="eyebrow text-paper-white mb-6">CreditPass is</span>
             <h1 className="font-heading font-light leading-[0.85] tracking-[-0.04em] text-5xl md:text-7xl lg:text-8xl">
@@ -435,20 +442,29 @@ export default function Home() {
               </button>
               <button
                 onClick={handleConnectAndBorrow}
-                className="font-ui text-base uppercase tracking-[0.1em] px-6 py-2.5 pill bg-transparent text-paper-white border border-paper-white hover:bg-paper-white hover:text-ink-black transition-colors"
+                disabled={!hasWallet || isConnectingWallet}
+                className="font-ui text-base uppercase tracking-[0.1em] px-6 py-2.5 pill bg-transparent text-paper-white border border-paper-white hover:bg-paper-white hover:text-ink-black transition-colors disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-paper-white"
               >
-                <Wallet className="h-4 w-4 inline mr-2" />
-                Connect &amp; Borrow
+                {isConnectingWallet ? (
+                  <Loader2 className="h-4 w-4 animate-spin inline mr-2" />
+                ) : (
+                  <Wallet className="h-4 w-4 inline mr-2" />
+                )}
+                {walletAddress ? "Enter Dashboard" : hasWallet ? "Connect & Borrow" : "No Wallet Found"}
               </button>
             </div>
             <p className="mt-6 font-label text-xs text-paper-white/40 uppercase tracking-[0.2em]">
-              Demo uses sample data · Connect &amp; Borrow uses your wallet
+              {hasWallet
+                ? walletAddress
+                  ? "Wallet connected — enter your dashboard"
+                  : "Demo uses sample data · Connect & Borrow uses your wallet"
+                : "No wallet detected · Try the Demo or install MetaMask/Rainbow"}
             </p>
           </div>
 
           {/* Marquee at bottom of hero */}
-          <div className="border-t border-paper-white/20 overflow-hidden py-4 mt-8">
-            <div className="flex gap-8 font-ui text-xl font-bold uppercase tracking-tight whitespace-nowrap animate-marquee text-paper-white/80">
+          <div className="border-t border-paper-white/20 bg-paper-white overflow-hidden py-4">
+            <div className="flex gap-8 font-ui text-xl font-bold uppercase tracking-tight whitespace-nowrap animate-marquee text-black">
               <span>Cross-Chain Credit</span>
               <span>—</span>
               <span>No Oracle Required</span>
