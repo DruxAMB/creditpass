@@ -27,6 +27,8 @@ import { Input } from "@/components/ui/input";
 import { ethers } from "ethers";
 import { CREDIT_LENDER_ABI } from "@/lib/abis";
 import { friendlyError } from "@/lib/errors";
+import { useAccount, useChainId, useSwitchChain, useConnectorClient, useDisconnect } from "wagmi";
+import { creditCoin3Testnet } from "wagmi/chains";
 
 type VerificationStep = {
   label: string;
@@ -66,12 +68,17 @@ export default function Home() {
   const [txHashInput, setTxHashInput] = useState("");
   const [isTakingLoan, setIsTakingLoan] = useState(false);
   const [loanError, setLoanError] = useState<string | null>(null);
-  const [walletAddress, setWalletAddress] = useState<string | null>(null);
-  const [isConnectingWallet, setIsConnectingWallet] = useState(false);
   const [walletError, setWalletError] = useState<string | null>(null);
-  const [wrongChain, setWrongChain] = useState(false);
   const liveRegionRef = useRef<HTMLDivElement>(null);
   const dashboardRef = useRef<HTMLDivElement>(null);
+
+  // Wagmi hooks for wallet state
+  const { address: walletAddress, isConnecting: isConnectingWallet } = useAccount();
+  const chainId = useChainId();
+  const { switchChainAsync } = useSwitchChain();
+  const { disconnect } = useDisconnect();
+  const { data: connectorClient } = useConnectorClient();
+  const wrongChain = !!walletAddress && chainId !== creditCoin3Testnet.id;
 
   // Load existing credit score on mount or when wallet changes
   const loadScore = useCallback(async () => {
@@ -130,105 +137,36 @@ export default function Home() {
   }
 
   const connectWallet = useCallback(async () => {
-    setIsConnectingWallet(true);
     setWalletError(null);
+    // wagmi's injected connector handles connect automatically via useAccount
+    // We just need to trigger it — but since we're using injected(), the connect happens
+    // when the user clicks the button. We'll use window.ethereum as fallback.
     try {
-      const eth = (window as unknown as { ethereum?: { request: (args: { method: string; params?: unknown[] }) => Promise<string[]> } }).ethereum;
+      const eth = (window as unknown as { ethereum?: { request: (args: { method: string }) => Promise<string[]> } }).ethereum;
       if (!eth) {
-        setWalletError("No wallet found. Install MetaMask or another web3 wallet.");
+        setWalletError("No wallet detected. Please install MetaMask or Rainbow browser extension and refresh the page.");
         return;
       }
-      const accounts = await eth.request({ method: "eth_requestAccounts" });
-      if (accounts && accounts.length > 0) {
-        setWalletAddress(accounts[0]);
-        announce(`Wallet connected: ${accounts[0].slice(0, 6)}...${accounts[0].slice(-4)}`);
-        // Check chain
-        const chainIdHex = await eth.request({ method: "eth_chainId" });
-        setWrongChain(Number(chainIdHex) !== 10203);
-      }
+      await eth.request({ method: "eth_requestAccounts" });
+      // wagmi's useAccount will pick up the connection automatically
     } catch (err) {
       const msg = friendlyError(err, "Connecting wallet");
       setWalletError(msg);
-    } finally {
-      setIsConnectingWallet(false);
     }
   }, []);
 
   const switchToCreditcoin = useCallback(async () => {
     try {
-      const eth = (window as unknown as { ethereum?: { request: (args: { method: string; params?: unknown[] }) => Promise<unknown> } }).ethereum;
-      if (!eth) return;
-      try {
-        await eth.request({
-          method: "wallet_switchEthereumChain",
-          params: [{ chainId: "0x27db" }],
-        });
-      } catch (switchErr) {
-        // 4902 = chain not added to wallet yet
-        if (switchErr && typeof switchErr === "object" && "code" in switchErr && switchErr.code === 4902) {
-          await eth.request({
-            method: "wallet_addEthereumChain",
-            params: [{
-              chainId: "0x27db",
-              chainName: "Creditcoin Testnet",
-              nativeCurrency: { name: "Creditcoin", symbol: "tCTC", decimals: 18 },
-              rpcUrls: ["https://rpc.cc3-testnet.creditcoin.network"],
-              blockExplorerUrls: ["https://creditcoin-testnet.blockscout.com"],
-            }],
-          });
-        } else {
-          throw switchErr;
-        }
-      }
-      setWrongChain(false);
+      await switchChainAsync({ chainId: creditCoin3Testnet.id });
       announce("Switched to Creditcoin testnet.");
     } catch (err) {
       const msg = friendlyError(err, "Switching network");
       setWalletError(msg);
     }
-  }, []);
-
-  // Detect chain changes — event listener + polling fallback
-  useEffect(() => {
-    if (!walletAddress) return;
-
-    const checkChain = async () => {
-      try {
-        const eth = (window as unknown as { ethereum?: { request: (args: { method: string; params?: unknown[] }) => Promise<unknown> } }).ethereum;
-        if (!eth) return;
-        const chainIdHex = await eth.request({ method: "eth_chainId" });
-        setWrongChain(Number(chainIdHex) !== 10203);
-      } catch {
-        // ignore — will retry on next poll
-      }
-    };
-
-    // Check immediately
-    checkChain();
-
-    // Poll every 3s as fallback (Rainbow doesn't always fire chainChanged events)
-    const interval = setInterval(checkChain, 3000);
-
-    // Also try event listener
-    const eth = (window as unknown as { ethereum?: { on?: (event: string, handler: (...args: unknown[]) => void) => void; removeListener?: (event: string, handler: (...args: unknown[]) => void) => void } }).ethereum;
-    if (eth?.on) {
-      const handler = (...args: unknown[]) => {
-        const chainId = args[0] as string;
-        setWrongChain(Number(chainId) !== 10203);
-      };
-      eth.on("chainChanged", handler);
-      return () => {
-        clearInterval(interval);
-        eth.removeListener?.("chainChanged", handler);
-      };
-    }
-
-    return () => clearInterval(interval);
-  }, [walletAddress]);
+  }, [switchChainAsync]);
 
   const disconnectWallet = useCallback(() => {
-    setWalletAddress(null);
-    setWrongChain(false);
+    disconnect();
     setCreditScore(0);
     setVerifiedRepayments(0);
     setTotalVerifiedAmount("0");
@@ -236,7 +174,7 @@ export default function Home() {
     setHasImported(false);
     setLoans([]);
     announce("Wallet disconnected.");
-  }, []);
+  }, [disconnect]);
 
   const handleImportRepayment = useCallback(async (customTxHash?: string) => {
     const txHash = customTxHash || txHashInput.trim() || "0xc209d676ae17e2f2d938535561aab96bab772b69fdadcc11918d9d2b945bf79e";
@@ -324,21 +262,11 @@ export default function Home() {
     setIsTakingLoan(true);
     setLoanError(null);
 
-    if (walletAddress) {
-      // Client-side: user signs the tx with their own wallet
+    if (walletAddress && connectorClient) {
+      // Client-side: user signs the tx with their own wallet via wagmi
       announce("Please confirm the loan transaction in your wallet...");
       try {
-        const eth = (window as unknown as { ethereum?: { request: (args: { method: string; params?: unknown[] }) => Promise<unknown> } }).ethereum;
-        if (!eth) {
-          throw new Error("No wallet found. Connect your wallet first.");
-        }
-        const provider = new ethers.BrowserProvider(eth as unknown as ethers.Eip1193Provider);
-        const network = await provider.getNetwork();
-        const creditcoinChainId = 10203;
-        if (Number(network.chainId) !== creditcoinChainId) {
-          // Try to switch — switchToCreditcoin handles add+switch
-          await switchToCreditcoin();
-        }
+        const provider = new ethers.BrowserProvider(connectorClient as unknown as ethers.Eip1193Provider);
         const signer = await provider.getSigner();
         const lender = new ethers.Contract(
           "0x1A69795A4C0d957e47c240BAa8DbC1f5d91290F2",
@@ -406,7 +334,7 @@ export default function Home() {
     } finally {
       setIsTakingLoan(false);
     }
-  }, [loanTerms.maxBorrow, walletAddress, switchToCreditcoin]);
+  }, [loanTerms.maxBorrow, walletAddress, connectorClient]);
 
   return (
     <div className="min-h-screen bg-background text-foreground">
