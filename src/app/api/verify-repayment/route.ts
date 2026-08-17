@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { ethers } from "ethers";
 import { blockProver, proofProvider, chainInfo } from "@gluwa/usc-sdk";
 import { CREDIT_PASS_ABI } from "@/lib/abis";
+import { friendlyError } from "@/lib/errors";
 
 const SEPOLIA_CHAIN_KEY = 1;
 const PROOF_BUILDER_URL = "https://prover.cc3-testnet.creditcoin.network";
@@ -137,18 +138,8 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error("Verification failed:", error);
-    const rawMsg = error instanceof Error ? error.message : "Verification failed";
-
-    // Check for known contract reverts
-    if (rawMsg.includes("Transaction already verified")) {
-      return NextResponse.json(
-        { error: "This transaction has already been verified and recorded. Try a different Sepolia tx hash." },
-        { status: 409 }
-      );
-    }
-
     return NextResponse.json(
-      { error: rawMsg },
+      { error: friendlyError(error, "Verification") },
       { status: 500 }
     );
   }

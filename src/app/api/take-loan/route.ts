@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ethers } from "ethers";
 import { CREDIT_LENDER_ABI } from "@/lib/abis";
+import { friendlyError } from "@/lib/errors";
 
 const CREDIT_LENDER_ADDRESS = "0x1A69795A4C0d957e47c240BAa8DbC1f5d91290F2";
 const CREDITCOIN_RPC = "https://rpc.cc3-testnet.creditcoin.network";
@@ -51,8 +52,10 @@ export async function POST(request: NextRequest) {
       repaid: loanData[6],
     });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Failed to take loan";
-    console.error("Take loan error:", message);
-    return NextResponse.json({ error: message }, { status: 500 });
+    console.error("Take loan error:", error);
+    return NextResponse.json(
+      { error: friendlyError(error, "Taking loan") },
+      { status: 500 }
+    );
   }
 }

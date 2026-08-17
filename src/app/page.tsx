@@ -26,6 +26,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { ethers } from "ethers";
 import { CREDIT_LENDER_ABI } from "@/lib/abis";
+import { friendlyError } from "@/lib/errors";
 
 type VerificationStep = {
   label: string;
@@ -73,41 +74,44 @@ export default function Home() {
   const dashboardRef = useRef<HTMLDivElement>(null);
 
   // Load existing credit score on mount or when wallet changes
-  useEffect(() => {
-    async function loadScore() {
-      try {
-        const params = walletAddress ? `?address=${walletAddress}` : "";
-        const res = await fetch(`/api/credit-score${params}`);
-        if (!res.ok) {
-          const data = await res.json().catch(() => null);
-          throw new Error(data?.error || `Failed to load (${res.status})`);
-        }
-        const data = await res.json();
-        if (data.score > 0) {
-          setCreditScore(data.score);
-          setVerifiedRepayments(data.verifiedRepayments);
-          setTotalVerifiedAmount(data.totalVerifiedAmount);
-          setHasImported(true);
-          setRepaymentHistory(
-            data.repayments.map((r: { loanId: number; amount: string; txHash: string; timestamp: string; sourceChainKey: number }) => ({
-              loanId: r.loanId,
-              amount: `${r.amount} ETH`,
-              txHash: `${r.txHash.slice(0, 8)}...${r.txHash.slice(-6)}`,
-              timestamp: new Date(r.timestamp).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
-              chain: r.sourceChainKey === 1 ? "Sepolia" : "Unknown",
-            }))
-          );
-          announce(`Credit score loaded: ${data.score}, ${data.verifiedRepayments} verified repayments.`);
-        }
-      } catch (err) {
-        console.error("Failed to load credit score:", err);
-        setLoadError(err instanceof Error ? err.message : "Failed to load credit score");
-      } finally {
-        setIsLoading(false);
+  const loadScore = useCallback(async () => {
+    setIsLoading(true);
+    setLoadError(null);
+    try {
+      const params = walletAddress ? `?address=${walletAddress}` : "";
+      const res = await fetch(`/api/credit-score${params}`);
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        throw new Error(data?.error || `Failed to load (${res.status})`);
       }
+      const data = await res.json();
+      if (data.score > 0) {
+        setCreditScore(data.score);
+        setVerifiedRepayments(data.verifiedRepayments);
+        setTotalVerifiedAmount(data.totalVerifiedAmount);
+        setHasImported(true);
+        setRepaymentHistory(
+          data.repayments.map((r: { loanId: number; amount: string; txHash: string; timestamp: string; sourceChainKey: number }) => ({
+            loanId: r.loanId,
+            amount: `${r.amount} ETH`,
+            txHash: `${r.txHash.slice(0, 8)}...${r.txHash.slice(-6)}`,
+            timestamp: new Date(r.timestamp).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
+            chain: r.sourceChainKey === 1 ? "Sepolia" : "Unknown",
+          }))
+        );
+        announce(`Credit score loaded: ${data.score}, ${data.verifiedRepayments} verified repayments.`);
+      }
+    } catch (err) {
+      console.error("Failed to load credit score:", err);
+      setLoadError(friendlyError(err, "Loading credit score"));
+    } finally {
+      setIsLoading(false);
     }
-    loadScore();
   }, [walletAddress]);
+
+  useEffect(() => {
+    loadScore();
+  }, [loadScore]);
 
   const scoreTier = getScoreTier(creditScore);
   const loanTerms = getLoanTerms(creditScore);
@@ -143,7 +147,7 @@ export default function Home() {
         setWrongChain(Number(chainIdHex) !== 10203);
       }
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Failed to connect wallet";
+      const msg = friendlyError(err, "Connecting wallet");
       setWalletError(msg);
     } finally {
       setIsConnectingWallet(false);
@@ -179,7 +183,7 @@ export default function Home() {
       setWrongChain(false);
       announce("Switched to Creditcoin testnet.");
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Failed to switch network";
+      const msg = friendlyError(err, "Switching network");
       setWalletError(msg);
     }
   }, []);
@@ -306,7 +310,7 @@ export default function Home() {
       announce(`Verification complete. Credit score updated to ${data.score}. ${data.verifiedRepayments} repayments verified.`);
     } catch (err) {
       console.error("Verification failed:", err);
-      const msg = err instanceof Error ? err.message : "Verification failed";
+      const msg = friendlyError(err, "Verification");
       setVerifyError(msg);
       setVerificationSteps([]);
       announce(`Verification failed: ${msg}`);
@@ -358,7 +362,7 @@ export default function Home() {
         setLoans((prev) => [...prev, newLoan]);
         announce(`Loan #${loanId} issued on Creditcoin at ${Number(loanData[2]) / 100}% APR.`);
       } catch (err) {
-        const msg = err instanceof Error ? err.message : "Failed to take loan";
+        const msg = friendlyError(err, "Taking loan");
         setLoanError(msg);
         announce(`Loan failed: ${msg}`);
       } finally {
@@ -396,7 +400,7 @@ export default function Home() {
       announce(`Loan #${data.loanId} issued on Creditcoin at ${data.interestRate} APR.`);
     } catch (err) {
       console.error("Take loan failed:", err);
-      const msg = err instanceof Error ? err.message : "Failed to take loan";
+      const msg = friendlyError(err, "Taking loan");
       setLoanError(msg);
       announce(`Loan failed: ${msg}`);
     } finally {
@@ -548,10 +552,21 @@ export default function Home() {
           <Card className="mb-6 border-destructive/30 bg-destructive/5">
             <CardContent className="flex items-center gap-3 pt-6">
               <AlertCircle className="h-5 w-5 text-destructive" aria-hidden="true" />
-              <div>
+              <div className="flex-1">
                 <p className="text-sm font-medium">Failed to load credit score</p>
                 <p className="text-xs text-muted-foreground">{loadError}</p>
               </div>
+              <Button
+                onClick={() => {
+                  setLoadError(null);
+                  setIsLoading(true);
+                  loadScore();
+                }}
+                variant="outline"
+                size="sm"
+              >
+                Retry
+              </Button>
             </CardContent>
           </Card>
         )}

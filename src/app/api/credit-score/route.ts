@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ethers } from "ethers";
 import { CREDIT_PASS_ABI } from "@/lib/abis";
+import { friendlyError } from "@/lib/errors";
 
 const CREDITPASS_ADDRESS = "0xb3FCCC7E689c80d49174E1F057A17C688c7aF196";
 const CREDITCOIN_RPC = "https://rpc.cc3-testnet.creditcoin.network";
@@ -51,7 +52,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error("Failed to fetch credit score:", error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Failed to fetch credit score" },
+      { error: friendlyError(error, "Loading credit score") },
       { status: 500 }
     );
   }
