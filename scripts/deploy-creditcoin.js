@@ -1,21 +1,21 @@
-import { ethers } from "hardhat";
+const hre = require("hardhat");
 
 async function main() {
-  const [deployer] = await ethers.getSigners();
+  const [deployer] = await hre.ethers.getSigners();
   console.log("Deploying contracts with account:", deployer.address);
 
-  const balance = await ethers.provider.getBalance(deployer.address);
-  console.log("Account balance:", ethers.formatEther(balance), "tCTC");
+  const balance = await hre.ethers.provider.getBalance(deployer.address);
+  console.log("Account balance:", hre.ethers.formatEther(balance), "tCTC");
 
   // Deploy CreditPass
-  const CreditPass = await ethers.getContractFactory("CreditPass");
+  const CreditPass = await hre.ethers.getContractFactory("CreditPass");
   const creditPass = await CreditPass.deploy();
   await creditPass.waitForDeployment();
   const creditPassAddr = await creditPass.getAddress();
   console.log("CreditPass deployed to:", creditPassAddr);
 
   // Deploy CreditLender (depends on CreditPass)
-  const CreditLender = await ethers.getContractFactory("CreditLender");
+  const CreditLender = await hre.ethers.getContractFactory("CreditLender");
   const creditLender = await CreditLender.deploy(creditPassAddr);
   await creditLender.waitForDeployment();
   const creditLenderAddr = await creditLender.getAddress();

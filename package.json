@@ -8,8 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "compile": "hardhat compile",
-    "deploy:sepolia": "hardhat run scripts/deploy-sepolia.ts --network sepolia",
-    "deploy:creditcoin": "hardhat run scripts/deploy-creditcoin.ts --network creditcoin"
+    "deploy:sepolia": "hardhat run scripts/deploy-sepolia.js --network sepolia",
+    "deploy:creditcoin": "hardhat run scripts/deploy-creditcoin.js --network creditcoin"
   },
   "dependencies": {
     "@base-ui/react": "1.7.0",
