@@ -49,7 +49,7 @@ export async function GET() {
   } catch (error) {
     console.error("Failed to fetch credit score:", error);
     return NextResponse.json(
-      { error: "Failed to fetch credit score" },
+      { error: error instanceof Error ? error.message : "Failed to fetch credit score" },
       { status: 500 }
     );
   }
