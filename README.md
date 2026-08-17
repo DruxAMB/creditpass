@@ -118,11 +118,17 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ## Demo Flow
 
-1. Open the app — credit score shows 0 (No History)
-2. Click "Import Repayment History" — triggers Attestcoin Protocol verification
-3. Watch the 6-step verification process in real-time
-4. Credit score updates to 401 (Bronze) with 1 verified repayment
-5. Loan terms improve from 20% APR → 12% APR
+1. Open the app — credit score loads from on-chain data (currently 502 / Bronze with 2 verified repayments)
+2. Click "Import More" — triggers Attestcoin Protocol verification of a new Sepolia repayment
+3. Watch the 6-step verification process in real-time:
+   - Fetching Sepolia transaction data
+   - Generating cross-chain proof via Attestcoin Protocol
+   - Submitting proof to BlockProver precompile
+   - Verifying block header on Creditcoin
+   - Decoding verified transaction data
+   - Updating credit score on-chain
+4. Credit score updates in real-time as new repayments are verified
+5. Loan terms improve with higher scores (20% → 15% → 12% → 8% → 5% APR)
 6. Click "Take Loan" to borrow against your credit score
 
 ## Key Innovation
