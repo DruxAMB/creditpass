@@ -12,6 +12,7 @@ import {
   LogOut,
   ArrowLeft,
 } from "lucide-react";
+import { motion } from "motion/react";
 import { ethers } from "ethers";
 import { CREDIT_LENDER_ABI } from "@/lib/abis";
 import { friendlyError } from "@/lib/errors";
@@ -67,6 +68,7 @@ export default function Home() {
   const [hasWallet, setHasWallet] = useState(false);
   const liveRegionRef = useRef<HTMLDivElement>(null);
   const dashboardRef = useRef<HTMLDivElement>(null);
+  const heroRef = useRef<HTMLElement>(null);
 
   // Wagmi hooks for wallet state
   const { address: walletAddress, isConnecting: isConnectingWallet } = useAccount();
@@ -536,39 +538,72 @@ export default function Home() {
 
       {/* Hero — full-bleed black band with hairline serif headline */}
       {showHero && (
-        <section className={`relative bg-ink-black text-paper-white flex flex-col min-h-[calc(100vh-70px)] ${heroExiting ? "hero-exit" : "hero-enter"}`}>
-          {/* Floating How It Works cards — desktop only */}
+        <section ref={heroRef} className={`relative bg-ink-black text-paper-white flex flex-col min-h-[calc(100vh-70px)] ${heroExiting ? "hero-exit" : "hero-enter"}`}>
+          {/* Floating How It Works cards — desktop only, draggable + wiggling */}
           <div className="hidden lg:block">
-            <div
-              className="float-card absolute top-12 left-8 max-w-[220px] p-5 pill border border-ink-black bg-paper-white opacity-80 transition-all duration-300 hover:shadow-[0_0_30px_rgba(161,254,160,0.3)]"
-              style={{ "--card-rotate": "-2deg", "--card-delay": "0.3s" } as React.CSSProperties}
+            <motion.div
+              drag
+              dragConstraints={heroRef}
+              dragMomentum={false}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 0.85, y: 0, rotate: [-2, 1, -2] }}
+              transition={{
+                opacity: { duration: 0.6, delay: 0.3 },
+                y: { duration: 0.6, delay: 0.3 },
+                rotate: { repeat: Infinity, duration: 4, ease: "easeInOut" },
+              }}
+              whileHover={{ rotate: 0, scale: 1.03, opacity: 1 }}
+              whileDrag={{ scale: 1.1, zIndex: 50, cursor: "grabbing" }}
+              className="absolute top-20 left-62 max-w-[220px] p-5 pill border border-ink-black bg-paper-white cursor-grab"
             >
               <div className="font-heading text-3xl font-light mb-2 text-ink-black">01</div>
               <h3 className="font-ui text-sm font-bold uppercase tracking-wide mb-1 text-ink-black">Repay on Ethereum</h3>
               <p className="font-ui text-xs text-muted-foreground">
                 Borrowers repay loans on Sepolia. Just a normal on-chain tx.
               </p>
-            </div>
-            <div
-              className="float-card absolute top-1/2 -translate-y-1/2 right-8 max-w-[220px] p-5 pill border border-ink-black bg-eclipse-green eclipse-glow opacity-90 transition-all duration-300 hover:shadow-[0_0_40px_rgba(161,254,160,0.5)]"
-              style={{ "--card-rotate": "1.5deg", "--card-delay": "0.5s" } as React.CSSProperties}
+            </motion.div>
+            <motion.div
+              drag
+              dragConstraints={heroRef}
+              dragMomentum={false}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 0.9, y: 0, rotate: [1.5, -1, 1.5] }}
+              transition={{
+                opacity: { duration: 0.6, delay: 0.5 },
+                y: { duration: 0.6, delay: 0.5 },
+                rotate: { repeat: Infinity, duration: 5, ease: "easeInOut" },
+              }}
+              whileHover={{ rotate: 0, scale: 1.03, opacity: 1 }}
+              whileDrag={{ scale: 1.1, zIndex: 50, cursor: "grabbing" }}
+              className="absolute top-1/2 -translate-y-1/2 right-62 max-w-[220px] p-5 pill border border-ink-black bg-eclipse-green eclipse-glow cursor-grab"
             >
               <div className="font-heading text-3xl font-light mb-2 text-ink-black">02</div>
               <h3 className="font-ui text-sm font-bold uppercase tracking-wide mb-1 text-ink-black">Verify via Attestcoin</h3>
               <p className="font-ui text-xs text-ink-black">
                 Cryptographic proof generated and verified on Creditcoin via BlockProver precompile.
               </p>
-            </div>
-            <div
-              className="float-card absolute bottom-24 left-12 max-w-[220px] p-5 pill border border-ink-black bg-paper-white opacity-80 transition-all duration-300 hover:shadow-[0_0_30px_rgba(161,254,160,0.3)]"
-              style={{ "--card-rotate": "-1deg", "--card-delay": "0.7s" } as React.CSSProperties}
+            </motion.div>
+            <motion.div
+              drag
+              dragConstraints={heroRef}
+              dragMomentum={false}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 0.85, y: 0, rotate: [-1, 1.5, -1] }}
+              transition={{
+                opacity: { duration: 0.6, delay: 0.7 },
+                y: { duration: 0.6, delay: 0.7 },
+                rotate: { repeat: Infinity, duration: 4.5, ease: "easeInOut" },
+              }}
+              whileHover={{ rotate: 0, scale: 1.03, opacity: 1 }}
+              whileDrag={{ scale: 1.1, zIndex: 50, cursor: "grabbing" }}
+              className="absolute bottom-40 left-90 max-w-[220px] p-5 pill border border-ink-black bg-paper-white cursor-grab"
             >
               <div className="font-heading text-3xl font-light mb-2 text-ink-black">03</div>
               <h3 className="font-ui text-sm font-bold uppercase tracking-wide mb-1 text-ink-black">Borrow Better</h3>
               <p className="font-ui text-xs text-muted-foreground">
                 Verified repayments become a credit score, unlocking lower rates and higher limits.
               </p>
-            </div>
+            </motion.div>
           </div>
 
           <div className="flex-1 flex flex-col items-center justify-center text-center px-5 py-12 relative z-10">
