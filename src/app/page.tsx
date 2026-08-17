@@ -99,7 +99,7 @@ export default function Home() {
     ]);
 
     // The real Sepolia repayment tx hash from our deployment
-    const txHash = "0x65b79312a09ff011cd981d94cd6e39632efa20f909047a6bb4646f6e9a9875b7";
+    const txHash = "0xc209d676ae17e2f2d938535561aab96bab772b69fdadcc11918d9d2b945bf79e";
 
     await sleep(800);
     setVerificationSteps((prev) => [
