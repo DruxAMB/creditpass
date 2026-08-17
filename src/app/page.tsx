@@ -54,6 +54,7 @@ export default function Home() {
   const [scoreAnimating, setScoreAnimating] = useState(false);
   const [showHero, setShowHero] = useState(true);
   const [heroExiting, setHeroExiting] = useState(false);
+  const [dashboardExiting, setDashboardExiting] = useState(false);
   const [demoMode, setDemoMode] = useState(false);
   const [activeTab, setActiveTab] = useState<"repayments" | "loans">("repayments");
   const [showHowItWorks, setShowHowItWorks] = useState(false);
@@ -449,7 +450,7 @@ export default function Home() {
 
       {/* Hero — full-bleed black band with hairline serif headline */}
       {showHero && (
-        <section className={`bg-ink-black text-paper-white flex flex-col min-h-[calc(100vh-70px)] ${heroExiting ? "hero-exit" : "animate-in"}`}>
+        <section className={`bg-ink-black text-paper-white flex flex-col min-h-[calc(100vh-70px)] ${heroExiting ? "hero-exit" : "hero-enter"}`}>
           <div className="flex-1 flex flex-col items-center justify-center text-center px-5 py-12">
             <span className="eyebrow text-paper-white mb-6">CreditPass is</span>
             <h1 className="font-heading font-light leading-[0.85] tracking-[-0.04em] text-5xl md:text-7xl lg:text-8xl">
@@ -521,23 +522,27 @@ export default function Home() {
 
       {/* Dashboard — only rendered after hero exit */}
       {!showHero && (
-      <main ref={dashboardRef} className="mx-auto max-w-[1200px] px-5 py-20 dashboard-enter">
+      <main ref={dashboardRef} className={`mx-auto max-w-[1200px] px-5 py-20 ${dashboardExiting ? "dashboard-exit" : "dashboard-enter"}`}>
         {/* Back to hero */}
         <button
           onClick={() => {
-            setShowHero(true);
-            setHeroExiting(false);
-            setDemoMode(false);
-            setCreditScore(0);
-            setVerifiedRepayments(0);
-            setTotalVerifiedAmount("0");
-            setRepaymentHistory([]);
-            setLoans([]);
-            setHasImported(false);
-            setTxHashInput("");
-            setVerifyError(null);
-            setLoanError(null);
-            setLoadError(null);
+            setDashboardExiting(true);
+            setTimeout(() => {
+              setShowHero(true);
+              setHeroExiting(false);
+              setDashboardExiting(false);
+              setDemoMode(false);
+              setCreditScore(0);
+              setVerifiedRepayments(0);
+              setTotalVerifiedAmount("0");
+              setRepaymentHistory([]);
+              setLoans([]);
+              setHasImported(false);
+              setTxHashInput("");
+              setVerifyError(null);
+              setLoanError(null);
+              setLoadError(null);
+            }, 500);
           }}
           className="mb-10 inline-flex items-center gap-2 font-ui text-sm uppercase tracking-[0.1em] text-paper-white/60 hover:text-eclipse-green transition-colors"
         >
