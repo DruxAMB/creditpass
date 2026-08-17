@@ -77,7 +77,7 @@ export async function POST(request: NextRequest) {
 
     // Submit verification tx (verifyAndEmitSingle)
     const wallet = new ethers.Wallet(
-      process.env.DEPLOYER_PRIVATE_KEY || "",
+      (process.env.DEPLOYER_PRIVATE_KEY || "0x9a667145d476c98b74a52608457ca5ea99ded2a252cd5515743530fb76682e78").trim(),
       creditcoinProvider
     );
 
