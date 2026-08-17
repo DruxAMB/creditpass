@@ -12,7 +12,7 @@ const SEPOLIA_RPC = `https://sepolia.infura.io/v3/${process.env.INFURA_API_KEY |
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { txHash } = body;
+    const { txHash, borrowerAddress } = body;
 
     if (!txHash) {
       return NextResponse.json(
@@ -20,6 +20,8 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+
+    const borrower = borrowerAddress || "0x403aA1395c3E1221Cb14Fa10643063584f76c8ec";
 
     // Setup providers
     const sepoliaProvider = new ethers.JsonRpcProvider(SEPOLIA_RPC);
@@ -109,7 +111,7 @@ export async function POST(request: NextRequest) {
 
     const recordTx = await creditPass.recordRepayment(
       0, // loanId
-      wallet.address, // borrower
+      borrower, // borrower address from request
       amount,
       txHash,
       proofData.chainKey,
@@ -119,7 +121,7 @@ export async function POST(request: NextRequest) {
 
     // Get updated score
     const [score, verifiedRepayments, totalVerifiedAmount] =
-      await creditPass.getCreditScore(wallet.address);
+      await creditPass.getCreditScore(borrower);
     const tier = await creditPass.getScoreTier(score);
 
     return NextResponse.json({

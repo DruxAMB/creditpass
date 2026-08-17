@@ -4,18 +4,19 @@ import { CREDIT_PASS_ABI } from "@/lib/abis";
 
 const CREDITPASS_ADDRESS = "0xb3FCCC7E689c80d49174E1F057A17C688c7aF196";
 const CREDITCOIN_RPC = "https://rpc.cc3-testnet.creditcoin.network";
-const BORROWER_ADDRESS = "0x403aA1395c3E1221Cb14Fa10643063584f76c8ec";
+const DEFAULT_BORROWER = "0x403aA1395c3E1221Cb14Fa10643063584f76c8ec";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    const { searchParams } = new URL(request.url);
+    const borrower = searchParams.get("address") || DEFAULT_BORROWER;
+
     const provider = new ethers.JsonRpcProvider(CREDITCOIN_RPC);
     const creditPass = new ethers.Contract(
       CREDITPASS_ADDRESS,
       CREDIT_PASS_ABI,
       provider
     );
-
-    const borrower = BORROWER_ADDRESS;
 
     const [score, verifiedRepayments, totalVerifiedAmount, lastUpdated] =
       await creditPass.getCreditScore(borrower);

@@ -17,12 +17,15 @@ import {
   AlertCircle,
   ArrowDown,
   Code2,
+  LogOut,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
+import { ethers } from "ethers";
+import { CREDIT_LENDER_ABI } from "@/lib/abis";
 
 type VerificationStep = {
   label: string;
@@ -62,14 +65,18 @@ export default function Home() {
   const [txHashInput, setTxHashInput] = useState("");
   const [isTakingLoan, setIsTakingLoan] = useState(false);
   const [loanError, setLoanError] = useState<string | null>(null);
+  const [walletAddress, setWalletAddress] = useState<string | null>(null);
+  const [isConnectingWallet, setIsConnectingWallet] = useState(false);
+  const [walletError, setWalletError] = useState<string | null>(null);
   const liveRegionRef = useRef<HTMLDivElement>(null);
   const dashboardRef = useRef<HTMLDivElement>(null);
 
-  // Load existing credit score on mount
+  // Load existing credit score on mount or when wallet changes
   useEffect(() => {
     async function loadScore() {
       try {
-        const res = await fetch("/api/credit-score");
+        const params = walletAddress ? `?address=${walletAddress}` : "";
+        const res = await fetch(`/api/credit-score${params}`);
         if (!res.ok) {
           const data = await res.json().catch(() => null);
           throw new Error(data?.error || `Failed to load (${res.status})`);
@@ -99,7 +106,7 @@ export default function Home() {
       }
     }
     loadScore();
-  }, []);
+  }, [walletAddress]);
 
   const scoreTier = getScoreTier(creditScore);
   const loanTerms = getLoanTerms(creditScore);
@@ -116,6 +123,39 @@ export default function Home() {
       dashboardRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
     }, 100);
   }
+
+  const connectWallet = useCallback(async () => {
+    setIsConnectingWallet(true);
+    setWalletError(null);
+    try {
+      const eth = (window as unknown as { ethereum?: { request: (args: { method: string; params?: unknown[] }) => Promise<string[]> } }).ethereum;
+      if (!eth) {
+        setWalletError("No wallet found. Install MetaMask or another web3 wallet.");
+        return;
+      }
+      const accounts = await eth.request({ method: "eth_requestAccounts" });
+      if (accounts && accounts.length > 0) {
+        setWalletAddress(accounts[0]);
+        announce(`Wallet connected: ${accounts[0].slice(0, 6)}...${accounts[0].slice(-4)}`);
+      }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Failed to connect wallet";
+      setWalletError(msg);
+    } finally {
+      setIsConnectingWallet(false);
+    }
+  }, []);
+
+  const disconnectWallet = useCallback(() => {
+    setWalletAddress(null);
+    setCreditScore(0);
+    setVerifiedRepayments(0);
+    setTotalVerifiedAmount("0");
+    setRepaymentHistory([]);
+    setHasImported(false);
+    setLoans([]);
+    announce("Wallet disconnected.");
+  }, []);
 
   const handleImportRepayment = useCallback(async (customTxHash?: string) => {
     const txHash = customTxHash || txHashInput.trim() || "0xc209d676ae17e2f2d938535561aab96bab772b69fdadcc11918d9d2b945bf79e";
@@ -152,7 +192,7 @@ export default function Home() {
       const response = await fetch("/api/verify-repayment", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ txHash }),
+        body: JSON.stringify({ txHash, borrowerAddress: walletAddress }),
       });
 
       const data = await response.json();
@@ -197,13 +237,64 @@ export default function Home() {
 
     await sleep(500);
     setIsVerifying(false);
-  }, [txHashInput]);
+  }, [txHashInput, walletAddress]);
 
   const handleTakeLoan = useCallback(async () => {
     setIsTakingLoan(true);
     setLoanError(null);
-    announce("Submitting loan request on Creditcoin...");
 
+    if (walletAddress) {
+      // Client-side: user signs the tx with their own wallet
+      announce("Please confirm the loan transaction in your wallet...");
+      try {
+        const eth = (window as unknown as { ethereum?: ethers.BrowserProvider }).ethereum;
+        if (!eth) {
+          throw new Error("No wallet found. Connect your wallet first.");
+        }
+        const provider = new ethers.BrowserProvider(eth);
+        const network = await provider.getNetwork();
+        const creditcoinChainId = 10203;
+        if (Number(network.chainId) !== creditcoinChainId) {
+          // Try to switch to Creditcoin testnet
+          await eth.request?.({
+            method: "wallet_switchEthereumChain",
+            params: [{ chainId: "0x27db" }],
+          });
+        }
+        const signer = await provider.getSigner();
+        const lender = new ethers.Contract(
+          "0x1A69795A4C0d957e47c240BAa8DbC1f5d91290F2",
+          CREDIT_LENDER_ABI,
+          signer
+        );
+        const borrowAmountWei = ethers.parseEther(loanTerms.maxBorrow.replace(/[^0-9.]/g, ""));
+        const collateralWei = ethers.parseEther((parseFloat(loanTerms.maxBorrow.replace(/[^0-9.]/g, "")) / 2).toString());
+        const tx = await lender.borrow(borrowAmountWei, 30, { value: collateralWei });
+        const receipt = await tx.wait();
+        const loanCount = await lender.getLoanCount();
+        const loanId = Number(loanCount) - 1;
+        const loanData = await lender.getLoan(loanId);
+        const newLoan: LoanRecord = {
+          loanId,
+          principal: `${ethers.formatEther(loanData[1])} tCTC`,
+          interestRate: `${Number(loanData[2]) / 100}%`,
+          collateral: `${ethers.formatEther(loanData[3])} tCTC`,
+          status: "active",
+        };
+        setLoans((prev) => [...prev, newLoan]);
+        announce(`Loan #${loanId} issued on Creditcoin at ${Number(loanData[2]) / 100}% APR.`);
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : "Failed to take loan";
+        setLoanError(msg);
+        announce(`Loan failed: ${msg}`);
+      } finally {
+        setIsTakingLoan(false);
+      }
+      return;
+    }
+
+    // Server-side fallback (demo relayer — loan issued to deployer address)
+    announce("Submitting loan request via relayer on Creditcoin...");
     try {
       const response = await fetch("/api/take-loan", {
         method: "POST",
@@ -237,7 +328,7 @@ export default function Home() {
     } finally {
       setIsTakingLoan(false);
     }
-  }, [loanTerms.maxBorrow]);
+  }, [loanTerms.maxBorrow, walletAddress]);
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -254,9 +345,33 @@ export default function Home() {
               Powered by Attestcoin Protocol
             </Badge>
           </div>
-          <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-            <Wallet className="h-4 w-4" aria-hidden="true" />
-            <span className="font-mono">0x4a2b...8f3c</span>
+          <div className="flex items-center gap-2">
+            {walletAddress ? (
+              <>
+                <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                  <Wallet className="h-4 w-4 text-primary" aria-hidden="true" />
+                  <span className="font-mono">{walletAddress.slice(0, 6)}...{walletAddress.slice(-4)}</span>
+                </div>
+                <Button onClick={disconnectWallet} variant="ghost" size="sm" className="h-8 px-2">
+                  <LogOut className="h-3.5 w-3.5" />
+                </Button>
+              </>
+            ) : (
+              <Button
+                onClick={connectWallet}
+                disabled={isConnectingWallet}
+                variant="outline"
+                size="sm"
+                className="min-h-[36px]"
+              >
+                {isConnectingWallet ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Wallet className="h-4 w-4" />
+                )}
+                Connect Wallet
+              </Button>
+            )}
           </div>
         </div>
       </header>
@@ -332,6 +447,22 @@ export default function Home() {
 
       {/* Dashboard */}
       <main ref={dashboardRef} className="mx-auto max-w-[1120px] px-5 py-8 md:py-12">
+        {/* Wallet error state */}
+        {walletError && (
+          <Card className="mb-6 border-destructive/30 bg-destructive/5 animate-in">
+            <CardContent className="flex items-center gap-3 pt-6">
+              <AlertCircle className="h-5 w-5 text-destructive" aria-hidden="true" />
+              <div className="flex-1">
+                <p className="text-sm font-medium">Wallet error</p>
+                <p className="text-xs text-muted-foreground">{walletError}</p>
+              </div>
+              <Button onClick={() => setWalletError(null)} variant="ghost" size="sm">
+                Dismiss
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Load error state */}
         {loadError && (
           <Card className="mb-6 border-destructive/30 bg-destructive/5">
@@ -536,6 +667,13 @@ export default function Home() {
                         )}
                       </Button>
                     </div>
+                  )}
+                  {creditScore > 0 && (
+                    <p className="mt-2 text-xs text-muted-foreground">
+                      {walletAddress
+                        ? "You will sign the loan transaction with your connected wallet on Creditcoin testnet."
+                        : "Without a connected wallet, the loan is issued via a demo relayer. Connect your wallet to borrow with your own address."}
+                    </p>
                   )}
                 </>
               )}
