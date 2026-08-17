@@ -2,10 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { ethers } from "ethers";
 import { blockProver, proofProvider, chainInfo } from "@gluwa/usc-sdk";
 import { CREDIT_PASS_ABI } from "@/lib/abis";
-import { CONTRACTS, NETWORKS } from "@/lib/contracts";
 
 const SEPOLIA_CHAIN_KEY = 1;
 const PROOF_BUILDER_URL = "https://prover.cc3-testnet.creditcoin.network";
+const CREDITPASS_ADDRESS = "0xb3FCCC7E689c80d49174E1F057A17C688c7aF196";
+const CREDITCOIN_RPC = "https://rpc.cc3-testnet.creditcoin.network";
+const SEPOLIA_RPC = `https://sepolia.infura.io/v3/${process.env.INFURA_API_KEY || "0a01199d41094205a22eb92865d61bf5"}`;
 
 export async function POST(request: NextRequest) {
   try {
@@ -20,8 +22,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Setup providers
-    const sepoliaProvider = new ethers.JsonRpcProvider(NETWORKS.SEPOLIA.rpcUrl);
-    const creditcoinProvider = new ethers.JsonRpcProvider(NETWORKS.CREDITCOIN.rpcUrl);
+    const sepoliaProvider = new ethers.JsonRpcProvider(SEPOLIA_RPC);
+    const creditcoinProvider = new ethers.JsonRpcProvider(CREDITCOIN_RPC);
 
     // Get tx receipt from Sepolia
     const receipt = await sepoliaProvider.getTransactionReceipt(txHash);
@@ -94,7 +96,7 @@ export async function POST(request: NextRequest) {
 
     // Record repayment on CreditPass contract
     const creditPass = new ethers.Contract(
-      CONTRACTS.CREDIT_PASS,
+      CREDITPASS_ADDRESS,
       CREDIT_PASS_ABI,
       wallet
     );

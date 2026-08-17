@@ -1,20 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ethers } from "ethers";
 import { CREDIT_PASS_ABI } from "@/lib/abis";
-import { CONTRACTS, NETWORKS } from "@/lib/contracts";
+
+const CREDITPASS_ADDRESS = "0xb3FCCC7E689c80d49174E1F057A17C688c7aF196";
+const CREDITCOIN_RPC = "https://rpc.cc3-testnet.creditcoin.network";
+const BORROWER_ADDRESS = "0x403aA1395c3E1221Cb14Fa10643063584f76c8ec";
 
 export async function GET() {
   try {
-    const provider = new ethers.JsonRpcProvider(NETWORKS.CREDITCOIN.rpcUrl);
+    const provider = new ethers.JsonRpcProvider(CREDITCOIN_RPC);
     const creditPass = new ethers.Contract(
-      CONTRACTS.CREDIT_PASS,
+      CREDITPASS_ADDRESS,
       CREDIT_PASS_ABI,
       provider
     );
 
-    // Use the deployer address (derived from seed phrase)
-    // For demo, we read the score of the known deployer
-    const borrower = "0x403aA1395c3E1221Cb14Fa10643063584f76c8ec";
+    const borrower = BORROWER_ADDRESS;
 
     const [score, verifiedRepayments, totalVerifiedAmount, lastUpdated] =
       await creditPass.getCreditScore(borrower);
