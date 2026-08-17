@@ -55,6 +55,7 @@ export default function Home() {
   const [heroExiting, setHeroExiting] = useState(false);
   const [demoMode, setDemoMode] = useState(false);
   const [activeTab, setActiveTab] = useState<"repayments" | "loans">("repayments");
+  const [showHowItWorks, setShowHowItWorks] = useState(false);
   const [txHashInput, setTxHashInput] = useState("");
   const [isTakingLoan, setIsTakingLoan] = useState(false);
   const [loanError, setLoanError] = useState<string | null>(null);
@@ -392,7 +393,7 @@ export default function Home() {
   }, [loanTerms.maxBorrow, walletAddress, connectorClient, demoMode]);
 
   return (
-    <div className="min-h-screen bg-ink-black text-paper-white">
+    <div className="min-h-screen bg-ink-black text-ink-black">
       {/* Live region for screen readers */}
       <div ref={liveRegionRef} aria-live="polite" aria-atomic="true" className="sr-only" />
 
@@ -740,12 +741,18 @@ export default function Home() {
           </div>
         )}
 
-        {/* How it works — 3 step cards */}
+        {/* How it works — collapsible */}
         <div className="mb-20">
-          <div className="text-center mb-10">
-            <div className="eyebrow text-paper-white">How It Works</div>
+          <div className="text-center mb-6">
+            <button
+              onClick={() => setShowHowItWorks(!showHowItWorks)}
+              className="eyebrow text-paper-white underline decoration-paper-white/40 underline-offset-4 hover:decoration-eclipse-green hover:text-eclipse-green transition-colors cursor-pointer"
+            >
+              How It Works {showHowItWorks ? "▲" : "▼"}
+            </button>
           </div>
-          <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
+          {showHowItWorks && (
+          <div className="grid grid-cols-1 gap-5 md:grid-cols-3 dashboard-enter">
             <div className="p-8 pill border border-ink-black bg-paper-white">
               <div className="font-heading text-5xl font-light mb-4">01</div>
               <h3 className="font-ui text-lg font-bold uppercase tracking-wide mb-2">Repay on Ethereum</h3>
@@ -768,6 +775,7 @@ export default function Home() {
               </p>
             </div>
           </div>
+          )}
         </div>
 
         {/* Tabs — Repayment History / Active Loans */}
