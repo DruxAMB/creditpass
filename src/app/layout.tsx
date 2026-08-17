@@ -1,16 +1,24 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Barlow_Condensed, Cormorant_Garamond, Space_Mono } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const barlowCondensed = Barlow_Condensed({
+  variable: "--font-barlow-condensed",
   subsets: ["latin"],
+  weight: ["400", "500", "700"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const cormorantGaramond = Cormorant_Garamond({
+  variable: "--font-gt-alpina-condensed",
   subsets: ["latin"],
+  weight: ["300", "400"],
+});
+
+const spaceMono = Space_Mono({
+  variable: "--font-atlas-typewriter",
+  subsets: ["latin"],
+  weight: ["400", "700"],
 });
 
 export const metadata: Metadata = {
@@ -33,9 +41,11 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
-      className={`dark ${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${barlowCondensed.variable} ${cormorantGaramond.variable} ${spaceMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col bg-background text-foreground"><Providers>{children}</Providers></body>
+      <body className="min-h-full flex flex-col bg-paper-white text-ink-black">
+        <Providers>{children}</Providers>
+      </body>
     </html>
   );
 }

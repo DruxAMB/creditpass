@@ -2,28 +2,15 @@
 
 import React, { useState, useCallback, useEffect, useRef } from "react";
 import {
-  ShieldCheck,
-  TrendingUp,
   Coins,
-  ArrowRight,
   CheckCircle2,
   Loader2,
-  Sparkles,
   Network,
   Wallet,
   Clock,
-  Percent,
-  Lock,
   AlertCircle,
-  ArrowDown,
-  Code2,
   LogOut,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Input } from "@/components/ui/input";
 import { ethers } from "ethers";
 import { CREDIT_LENDER_ABI } from "@/lib/abis";
 import { friendlyError } from "@/lib/errors";
@@ -338,583 +325,496 @@ export default function Home() {
   }, [loanTerms.maxBorrow, walletAddress, connectorClient]);
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen bg-paper-white text-ink-black">
       {/* Live region for screen readers */}
       <div ref={liveRegionRef} aria-live="polite" aria-atomic="true" className="sr-only" />
 
-      {/* Header */}
-      <header className="border-b border-border">
-        <div className="mx-auto flex max-w-[1120px] items-center justify-between px-5 py-4">
-          <div className="flex items-center gap-2">
-            <ShieldCheck className="h-5 w-5 text-primary" aria-hidden="true" />
-            <span className="text-base font-semibold tracking-tight">CreditPass</span>
-            <Badge variant="secondary" className="ml-2 text-xs">
-              Powered by Attestcoin Protocol
-            </Badge>
+      {/* Header — white top bar, centered wordmark, right-aligned wallet/CTA */}
+      <header className="sticky top-0 z-50 bg-paper-white border-b border-ink-black">
+        <div className="mx-auto flex max-w-[1200px] items-center justify-between px-5 py-4">
+          <div className="flex items-center gap-3">
+            <span className="font-ui text-xl font-bold tracking-tight uppercase">CreditPass</span>
+            <span className="eyebrow text-muted-foreground hidden sm:inline">Powered by Attestcoin</span>
           </div>
           <div className="flex items-center gap-2">
             {walletAddress ? (
               <>
-                <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                  <Wallet className="h-4 w-4 text-primary" aria-hidden="true" />
-                  <span className="font-mono">{walletAddress.slice(0, 6)}...{walletAddress.slice(-4)}</span>
+                <div className="flex items-center gap-1.5 font-label text-sm">
+                  <Wallet className="h-4 w-4" aria-hidden="true" />
+                  <span>{walletAddress.slice(0, 6)}...{walletAddress.slice(-4)}</span>
                 </div>
                 {wrongChain && (
-                  <Button onClick={switchToCreditcoin} variant="outline" size="sm" className="h-8 border-destructive/40 text-destructive">
-                    <AlertCircle className="h-3.5 w-3.5" />
+                  <button
+                    onClick={switchToCreditcoin}
+                    className="font-ui text-xs uppercase tracking-[0.1em] px-3 py-1.5 pill border border-ink-black bg-paper-white hover:bg-eclipse-green transition-colors"
+                  >
+                    <AlertCircle className="h-3 w-3 inline mr-1" />
                     Wrong Network
-                  </Button>
+                  </button>
                 )}
-                <Button onClick={disconnectWallet} variant="ghost" size="sm" className="h-8 px-2">
+                <button
+                  onClick={disconnectWallet}
+                  className="font-ui p-1.5 pill border border-ink-black bg-paper-white hover:bg-eclipse-green transition-colors"
+                  aria-label="Disconnect wallet"
+                >
                   <LogOut className="h-3.5 w-3.5" />
-                </Button>
+                </button>
               </>
             ) : (
-              <Button
+              <button
                 onClick={connectWallet}
                 disabled={isConnectingWallet}
-                variant="outline"
-                size="sm"
-                className="min-h-[36px]"
+                className="font-ui text-sm uppercase tracking-[0.1em] px-5 py-2 pill-nav bg-ink-black text-paper-white hover:bg-eclipse-green hover:text-ink-black transition-colors disabled:opacity-50"
               >
                 {isConnectingWallet ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <Loader2 className="h-4 w-4 animate-spin inline" />
                 ) : (
-                  <Wallet className="h-4 w-4" />
+                  <Wallet className="h-4 w-4 inline mr-1.5" />
                 )}
                 Connect Wallet
-              </Button>
+              </button>
             )}
           </div>
         </div>
       </header>
 
-      {/* Hero section */}
+      {/* Hero — full-bleed black band with hairline serif headline */}
       {showHero && (
-        <section className="border-b border-border animate-in">
-          <div className="mx-auto max-w-[1120px] px-5 py-16 md:py-24">
-            <div className="max-w-2xl">
-              <h1 className="text-3xl font-semibold tracking-tight md:text-4xl md:leading-[2.75rem]">
-                Your repayment history on Ethereum is your credit score on Creditcoin.
-              </h1>
-              <p className="mt-4 text-base text-muted-foreground md:text-lg">
-                CreditPass verifies Sepolia loan repayments on Creditcoin using the Attestcoin Protocol —
-                no oracle, no intermediary. Just cryptographic proof.
-              </p>
-              <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-                <Button onClick={scrollToDashboard} size="lg" className="min-h-[44px]">
-                  Try the demo
-                  <ArrowDown className="h-4 w-4" />
-                </Button>
-                <Button
-                  onClick={() => window.open("https://github.com/DruxAMB/creditpass", "_blank")}
-                  variant="outline"
-                  size="lg"
-                  className="min-h-[44px]"
-                >
-                  <Code2 className="h-4 w-4" />
-                  View source
-                </Button>
-              </div>
-            </div>
-
-            {/* Architecture diagram */}
-            <div className="mt-16 grid grid-cols-1 gap-4 md:grid-cols-3">
-              <Card className="animate-slide-up" style={{ animationDelay: "0ms" }}>
-                <CardContent className="pt-6">
-                  <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-primary/15">
-                    <span className="text-base font-bold text-primary">1</span>
-                  </div>
-                  <h3 className="mb-1 font-semibold">Repay on Ethereum</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Borrowers repay loans on Sepolia. The transaction is recorded on-chain — nothing special, just a normal tx.
-                  </p>
-                </CardContent>
-              </Card>
-              <Card className="animate-slide-up" style={{ animationDelay: "100ms" }}>
-                <CardContent className="pt-6">
-                  <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-primary/15">
-                    <span className="text-base font-bold text-primary">2</span>
-                  </div>
-                  <h3 className="mb-1 font-semibold">Verify via Attestcoin Protocol</h3>
-                  <p className="text-sm text-muted-foreground">
-                    A cryptographic proof of the Sepolia tx is generated and verified on Creditcoin through the BlockProver precompile at <code className="font-mono text-xs">0x...0FD2</code>.
-                  </p>
-                </CardContent>
-              </Card>
-              <Card className="animate-slide-up" style={{ animationDelay: "200ms" }}>
-                <CardContent className="pt-6">
-                  <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-primary/15">
-                    <span className="text-base font-bold text-primary">3</span>
-                  </div>
-                  <h3 className="mb-1 font-semibold">Borrow with better terms</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Verified repayments become a credit score on Creditcoin, unlocking lower interest rates and higher borrowing limits.
-                  </p>
-                </CardContent>
-              </Card>
+        <section className="bg-ink-black text-paper-white animate-in">
+          <div className="mx-auto max-w-[1200px] px-5 py-20 md:py-32 flex flex-col items-center text-center">
+            <span className="eyebrow text-paper-white mb-6">CreditPass is</span>
+            <h1 className="font-heading font-light leading-[0.85] tracking-[-0.04em] text-5xl md:text-7xl lg:text-8xl">
+              Your Ethereum Repayments
+            </h1>
+            <h1 className="font-heading font-light leading-[0.85] tracking-[-0.04em] text-5xl md:text-7xl lg:text-8xl mt-2">
+              Are Your Credit Score
+            </h1>
+            <p className="mt-8 max-w-xl font-ui text-lg text-paper-white/70 leading-relaxed">
+              Verify Sepolia loan repayments on Creditcoin using cryptographic proofs.
+              No oracle, no intermediary — just math.
+            </p>
+            <div className="mt-10 flex flex-col gap-3 sm:flex-row">
+              <button
+                onClick={scrollToDashboard}
+                className="font-ui text-base uppercase tracking-[0.1em] px-6 py-2.5 pill bg-eclipse-green text-ink-black border border-ink-black hover:border-2 transition-all"
+              >
+                Try the Demo
+              </button>
+              <button
+                onClick={() => window.open("https://github.com/DruxAMB/creditpass", "_blank")}
+                className="font-ui text-base uppercase tracking-[0.1em] px-6 py-2.5 pill bg-transparent text-paper-white border border-paper-white hover:bg-paper-white hover:text-ink-black transition-colors"
+              >
+                View Source →
+              </button>
             </div>
           </div>
         </section>
       )}
 
+      {/* Marquee strip */}
+      <div className="border-y border-ink-black overflow-hidden py-4">
+        <div className="flex gap-8 font-ui text-2xl font-bold uppercase tracking-tight whitespace-nowrap animate-marquee">
+          <span>Cross-Chain Credit</span>
+          <span>—</span>
+          <span>No Oracle Required</span>
+          <span>—</span>
+          <span>Attestcoin Protocol</span>
+          <span>—</span>
+          <span>Cryptographic Proof</span>
+          <span>—</span>
+          <span>Creditcoin Testnet</span>
+          <span>—</span>
+          <span>Cross-Chain Credit</span>
+          <span>—</span>
+          <span>No Oracle Required</span>
+          <span>—</span>
+          <span>Attestcoin Protocol</span>
+          <span>—</span>
+          <span>Cryptographic Proof</span>
+          <span>—</span>
+          <span>Creditcoin Testnet</span>
+          <span>—</span>
+        </div>
+      </div>
+
       {/* Dashboard */}
-      <main ref={dashboardRef} className="mx-auto max-w-[1120px] px-5 py-8 md:py-12">
-        {/* Wallet error state */}
+      <main ref={dashboardRef} className="mx-auto max-w-[1200px] px-5 py-20">
+        {/* Error states */}
         {walletError && (
-          <Card className="mb-6 border-destructive/30 bg-destructive/5 animate-in">
-            <CardContent className="flex items-center gap-3 pt-6">
-              <AlertCircle className="h-5 w-5 text-destructive" aria-hidden="true" />
-              <div className="flex-1">
-                <p className="text-sm font-medium">Wallet error</p>
-                <p className="text-xs text-muted-foreground">{walletError}</p>
-              </div>
-              <Button onClick={() => setWalletError(null)} variant="ghost" size="sm">
-                Dismiss
-              </Button>
-            </CardContent>
-          </Card>
+          <div className="mb-6 flex items-center gap-3 p-5 pill border border-ink-black bg-paper-white animate-in">
+            <AlertCircle className="h-5 w-5 text-destructive shrink-0" aria-hidden="true" />
+            <div className="flex-1">
+              <p className="font-ui text-sm font-bold uppercase tracking-wide">Wallet Error</p>
+              <p className="font-ui text-sm text-muted-foreground">{walletError}</p>
+            </div>
+            <button onClick={() => setWalletError(null)} className="font-ui text-xs uppercase tracking-[0.1em] px-3 py-1 pill border border-ink-black hover:bg-eclipse-green transition-colors">
+              Dismiss
+            </button>
+          </div>
         )}
 
-        {/* Load error state */}
         {loadError && (
-          <Card className="mb-6 border-destructive/30 bg-destructive/5">
-            <CardContent className="flex items-center gap-3 pt-6">
-              <AlertCircle className="h-5 w-5 text-destructive" aria-hidden="true" />
-              <div className="flex-1">
-                <p className="text-sm font-medium">Failed to load credit score</p>
-                <p className="text-xs text-muted-foreground">{loadError}</p>
-              </div>
-              <Button
-                onClick={() => {
-                  setLoadError(null);
-                  setIsLoading(true);
-                  loadScore();
-                }}
-                variant="outline"
-                size="sm"
-              >
-                Retry
-              </Button>
-            </CardContent>
-          </Card>
+          <div className="mb-6 flex items-center gap-3 p-5 pill border border-ink-black bg-paper-white">
+            <AlertCircle className="h-5 w-5 text-destructive shrink-0" aria-hidden="true" />
+            <div className="flex-1">
+              <p className="font-ui text-sm font-bold uppercase tracking-wide">Failed to Load</p>
+              <p className="font-ui text-sm text-muted-foreground">{loadError}</p>
+            </div>
+            <button
+              onClick={() => { setLoadError(null); setIsLoading(true); loadScore(); }}
+              className="font-ui text-xs uppercase tracking-[0.1em] px-3 py-1 pill border border-ink-black hover:bg-eclipse-green transition-colors"
+            >
+              Retry
+            </button>
+          </div>
         )}
 
-        {/* Verify error state */}
         {verifyError && !isVerifying && (
-          <Card className="mb-6 border-destructive/30 bg-destructive/5 animate-in">
-            <CardContent className="flex items-center gap-3 pt-6">
-              <AlertCircle className="h-5 w-5 text-destructive" aria-hidden="true" />
-              <div className="flex-1">
-                <p className="text-sm font-medium">Verification failed</p>
-                <p className="text-xs text-muted-foreground">{verifyError}</p>
-              </div>
-              <Button onClick={() => setVerifyError(null)} variant="ghost" size="sm">
-                Dismiss
-              </Button>
-            </CardContent>
-          </Card>
+          <div className="mb-6 flex items-center gap-3 p-5 pill border border-ink-black bg-paper-white animate-in">
+            <AlertCircle className="h-5 w-5 text-destructive shrink-0" aria-hidden="true" />
+            <div className="flex-1">
+              <p className="font-ui text-sm font-bold uppercase tracking-wide">Verification Failed</p>
+              <p className="font-ui text-sm text-muted-foreground">{verifyError}</p>
+            </div>
+            <button onClick={() => setVerifyError(null)} className="font-ui text-xs uppercase tracking-[0.1em] px-3 py-1 pill border border-ink-black hover:bg-eclipse-green transition-colors">
+              Dismiss
+            </button>
+          </div>
         )}
 
-        {/* Loan error state */}
         {loanError && !isTakingLoan && (
-          <Card className="mb-6 border-destructive/30 bg-destructive/5 animate-in">
-            <CardContent className="flex items-center gap-3 pt-6">
-              <AlertCircle className="h-5 w-5 text-destructive" aria-hidden="true" />
-              <div className="flex-1">
-                <p className="text-sm font-medium">Loan failed</p>
-                <p className="text-xs text-muted-foreground">{loanError}</p>
-              </div>
-              <Button onClick={() => setLoanError(null)} variant="ghost" size="sm">
-                Dismiss
-              </Button>
-            </CardContent>
-          </Card>
+          <div className="mb-6 flex items-center gap-3 p-5 pill border border-ink-black bg-paper-white animate-in">
+            <AlertCircle className="h-5 w-5 text-destructive shrink-0" aria-hidden="true" />
+            <div className="flex-1">
+              <p className="font-ui text-sm font-bold uppercase tracking-wide">Loan Failed</p>
+              <p className="font-ui text-sm text-muted-foreground">{loanError}</p>
+            </div>
+            <button onClick={() => setLoanError(null)} className="font-ui text-xs uppercase tracking-[0.1em] px-3 py-1 pill border border-ink-black hover:bg-eclipse-green transition-colors">
+              Dismiss
+            </button>
+          </div>
         )}
 
-        <div className="mb-8 grid grid-cols-1 gap-4 md:gap-6 lg:grid-cols-3">
+        {/* Credit Score + Loan Terms */}
+        <div className="mb-20 grid grid-cols-1 gap-5 lg:grid-cols-3">
           {/* Credit score card */}
-          <Card className="lg:col-span-1">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-                <TrendingUp className="h-4 w-4" aria-hidden="true" />
-                Credit Score
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {isLoading ? (
-                <div className="flex flex-col items-center gap-3">
-                  <div className="skeleton h-32 w-32 rounded-full" />
-                  <div className="skeleton h-6 w-20 rounded-full" />
-                  <div className="flex gap-4">
-                    <div className="skeleton h-8 w-16" />
-                    <div className="skeleton h-8 w-16" />
+          <div className="lg:col-span-1 p-8 pill border border-ink-black bg-paper-white">
+            <div className="eyebrow text-ink-black mb-6">Credit Score</div>
+            {isLoading ? (
+              <div className="flex flex-col items-center gap-3">
+                <div className="skeleton h-32 w-32 rounded-full" />
+                <div className="skeleton h-6 w-20" />
+              </div>
+            ) : (
+              <div className="flex flex-col items-center gap-4">
+                <div className={`relative flex h-32 w-32 items-center justify-center rounded-full border-2 border-ink-black ${scoreAnimating ? "animate-score" : ""}`}>
+                  <div className="text-center">
+                    <div className="font-heading text-4xl font-light tabular">{creditScore}</div>
+                    <div className="font-label text-xs text-muted-foreground">/ 950</div>
                   </div>
                 </div>
-              ) : (
-                <div className="flex flex-col items-center gap-3">
-                  <div className={`relative flex h-32 w-32 items-center justify-center rounded-full border-4 border-border ${scoreAnimating ? "animate-score" : ""}`}>
-                    <div className="text-center">
-                      <div className="text-3xl font-bold tabular">{creditScore}</div>
-                      <div className="text-xs text-muted-foreground">/ 950</div>
-                    </div>
+                <div className={`px-4 py-1.5 pill border border-ink-black font-ui text-sm font-bold uppercase tracking-[0.1em] ${scoreTier.badgeClass}`}>
+                  {scoreTier.label}
+                </div>
+                <div className="flex gap-8 text-center pt-2">
+                  <div>
+                    <div className="font-ui text-xl font-bold tabular">{verifiedRepayments}</div>
+                    <div className="eyebrow text-muted-foreground mt-1">Repayments</div>
                   </div>
-                  <Badge className={`${scoreTier.badgeClass} border-0`}>
-                    {scoreTier.label}
-                  </Badge>
-                  <div className="flex gap-4 text-center">
-                    <div>
-                      <div className="text-lg font-semibold tabular">{verifiedRepayments}</div>
-                      <div className="text-xs text-muted-foreground">Verified Repayments</div>
-                    </div>
-                    <div>
-                      <div className="text-lg font-semibold tabular">{totalVerifiedAmount} ETH</div>
-                      <div className="text-xs text-muted-foreground">Total Verified</div>
-                    </div>
+                  <div>
+                    <div className="font-ui text-xl font-bold tabular">{totalVerifiedAmount}</div>
+                    <div className="eyebrow text-muted-foreground mt-1">ETH Verified</div>
                   </div>
                 </div>
-              )}
-            </CardContent>
-          </Card>
+              </div>
+            )}
+          </div>
 
           {/* Loan terms card */}
-          <Card className="lg:col-span-2">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-                <Coins className="h-4 w-4" aria-hidden="true" />
-                Available Loan Terms
-              </CardTitle>
-              <CardDescription>
-                {creditScore === 0
-                  ? "No credit history verified. Import your repayment history to unlock better terms."
-                  : "Terms based on your verified cross-chain credit score."}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {isLoading ? (
+          <div className="lg:col-span-2 p-8 pill border border-ink-black bg-paper-white">
+            <div className="eyebrow text-ink-black mb-2">Available Loan Terms</div>
+            <p className="font-ui text-sm text-muted-foreground mb-6">
+              {creditScore === 0
+                ? "No credit history verified. Import your repayment history to unlock better terms."
+                : "Terms based on your verified cross-chain credit score."}
+            </p>
+            {isLoading ? (
+              <div className="grid grid-cols-2 gap-4">
+                <div className="skeleton h-24" />
+                <div className="skeleton h-24" />
+                <div className="skeleton h-12 col-span-2" />
+              </div>
+            ) : (
+              <>
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="skeleton h-20 rounded-lg" />
-                  <div className="skeleton h-20 rounded-lg" />
-                  <div className="skeleton h-11 col-span-2 rounded-lg" />
+                  <div className="p-5 pill border border-ink-black bg-paper-white">
+                    <div className="eyebrow text-muted-foreground">Interest Rate</div>
+                    <div className={`mt-2 font-heading text-3xl font-light tabular ${creditScore === 0 ? "text-destructive" : ""}`}>
+                      {loanTerms.interestRate}
+                    </div>
+                  </div>
+                  <div className="p-5 pill border border-ink-black bg-paper-white">
+                    <div className="eyebrow text-muted-foreground">Max Borrow</div>
+                    <div className={`mt-2 font-heading text-3xl font-light tabular ${creditScore === 0 ? "text-destructive" : ""}`}>
+                      {loanTerms.maxBorrow}
+                    </div>
+                  </div>
                 </div>
-              ) : (
-                <>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="rounded-lg border border-border bg-muted/50 p-4">
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                        <Percent className="h-3 w-3" aria-hidden="true" />
-                        Interest Rate
-                      </div>
-                      <div className={`mt-1 text-2xl font-bold tabular ${creditScore === 0 ? "text-destructive" : "text-primary"}`}>
-                        {loanTerms.interestRate}
-                      </div>
-                    </div>
-                    <div className="rounded-lg border border-border bg-muted/50 p-4">
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                        <Coins className="h-3 w-3" aria-hidden="true" />
-                        Max Borrow
-                      </div>
-                      <div className={`mt-1 text-2xl font-bold tabular ${creditScore === 0 ? "text-destructive" : "text-primary"}`}>
-                        {loanTerms.maxBorrow}
-                      </div>
-                    </div>
-                  </div>
 
-                  {/* Tx hash input */}
-                  <div className="mt-4">
-                    <label htmlFor="txhash" className="mb-1.5 block text-xs text-muted-foreground">
-                      Sepolia tx hash (optional — defaults to demo tx)
-                    </label>
-                    <Input
-                      id="txhash"
-                      type="text"
-                      placeholder="0x..."
-                      value={txHashInput}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTxHashInput(e.target.value)}
-                      disabled={isVerifying}
-                      className="font-mono text-sm"
-                    />
-                  </div>
+                <div className="mt-5">
+                  <label htmlFor="txhash" className="eyebrow text-muted-foreground block mb-2">
+                    Sepolia tx hash (optional — defaults to demo tx)
+                  </label>
+                  <input
+                    id="txhash"
+                    type="text"
+                    placeholder="0x..."
+                    value={txHashInput}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTxHashInput(e.target.value)}
+                    disabled={isVerifying}
+                    className="font-label text-sm w-full px-4 py-3 pill border border-ink-black bg-paper-white focus:outline-none focus:border-2 disabled:opacity-50"
+                  />
+                </div>
 
-                  {creditScore === 0 ? (
-                    <Button
+                {creditScore === 0 ? (
+                  <button
+                    onClick={() => handleImportRepayment()}
+                    disabled={isVerifying}
+                    className="mt-4 w-full font-ui text-base uppercase tracking-[0.1em] px-6 py-3 pill bg-eclipse-green text-ink-black border border-ink-black hover:border-2 transition-all disabled:opacity-50"
+                  >
+                    {isVerifying ? (
+                      <><Loader2 className="h-4 w-4 animate-spin inline mr-2" />Verifying...</>
+                    ) : (
+                      <><Network className="h-4 w-4 inline mr-2" />Import Repayment History</>
+                    )}
+                  </button>
+                ) : (
+                  <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+                    <button
+                      onClick={handleTakeLoan}
+                      disabled={isTakingLoan || (walletAddress ? wrongChain : false)}
+                      className="flex-1 font-ui text-base uppercase tracking-[0.1em] px-6 py-3 pill bg-eclipse-green text-ink-black border border-ink-black hover:border-2 transition-all disabled:opacity-50"
+                    >
+                      {isTakingLoan ? (
+                        <><Loader2 className="h-4 w-4 animate-spin inline mr-2" />Issuing...</>
+                      ) : (
+                        <>Take Loan at {loanTerms.interestRate} →</>
+                      )}
+                    </button>
+                    <button
                       onClick={() => handleImportRepayment()}
                       disabled={isVerifying}
-                      className="mt-3 w-full min-h-[44px]"
-                      size="lg"
+                      className="font-ui text-base uppercase tracking-[0.1em] px-6 py-3 pill bg-paper-white text-ink-black border border-ink-black hover:bg-eclipse-green transition-colors disabled:opacity-50"
                     >
                       {isVerifying ? (
-                        <>
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                          Verifying...
-                        </>
+                        <Loader2 className="h-4 w-4 animate-spin inline" />
                       ) : (
-                        <>
-                          <Network className="h-4 w-4" />
-                          Import Repayment History
-                        </>
+                        <>Import More</>
                       )}
-                    </Button>
-                  ) : (
-                    <div className="mt-3 flex flex-col gap-2 sm:flex-row">
-                      <Button
-                        onClick={handleTakeLoan}
-                        disabled={isTakingLoan || (walletAddress ? wrongChain : false)}
-                        className="flex-1 min-h-[44px]"
-                        size="lg"
-                      >
-                        {isTakingLoan ? (
-                          <>
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                            Issuing on Creditcoin...
-                          </>
-                        ) : (
-                          <>
-                            Take Loan at {loanTerms.interestRate}
-                            <ArrowRight className="h-4 w-4" />
-                          </>
-                        )}
-                      </Button>
-                      <Button
-                        onClick={() => handleImportRepayment()}
-                        disabled={isVerifying}
-                        variant="outline"
-                        className="min-h-[44px]"
-                      >
-                        {isVerifying ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <>
-                            <Sparkles className="h-4 w-4" />
-                            Import More
-                          </>
-                        )}
-                      </Button>
-                    </div>
-                  )}
-                  {creditScore > 0 && (
-                    <p className="mt-2 text-xs text-muted-foreground">
-                      {walletAddress && wrongChain
-                        ? "Wrong network. Click \"Wrong Network\" in the header to switch to Creditcoin testnet."
-                        : walletAddress
-                          ? "You will sign the loan transaction with your connected wallet on Creditcoin testnet."
-                          : "Without a connected wallet, the loan is issued via a demo relayer. Connect your wallet to borrow with your own address."}
-                    </p>
-                  )}
-                </>
-              )}
-            </CardContent>
-          </Card>
+                    </button>
+                  </div>
+                )}
+                {creditScore > 0 && (
+                  <p className="mt-3 font-ui text-xs text-muted-foreground">
+                    {walletAddress && wrongChain
+                      ? "Wrong network. Click \"Wrong Network\" in the header to switch to Creditcoin testnet."
+                      : walletAddress
+                        ? "You will sign the loan transaction with your connected wallet on Creditcoin testnet."
+                        : "Without a connected wallet, the loan is issued via a demo relayer. Connect your wallet to borrow with your own address."}
+                  </p>
+                )}
+              </>
+            )}
+          </div>
         </div>
 
         {/* Verification progress */}
         {isVerifying && (
-          <Card className="mb-8 border-primary/30 bg-primary/5 animate-in">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-sm font-medium text-primary">
-                <Network className="h-4 w-4" aria-hidden="true" />
-                Attestcoin Protocol Verification
-              </CardTitle>
-              <CardDescription>
-                Cryptographically verifying your Sepolia repayment on Creditcoin — no oracle required.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
+          <div className="mb-20 p-8 pill border border-ink-black bg-eclipse-green/10 animate-in">
+            <div className="eyebrow text-ink-black mb-2">Attestcoin Protocol Verification</div>
+            <p className="font-ui text-sm text-muted-foreground mb-6">
+              Cryptographically verifying your Sepolia repayment on Creditcoin — no oracle required.
+            </p>
+            <div className="space-y-3">
+              {verificationSteps.map((step, i) => (
+                <div key={i} className="flex items-center gap-3">
+                  {step.status === "done" ? (
+                    <CheckCircle2 className="h-5 w-5 text-ink-black" aria-hidden="true" />
+                  ) : step.status === "active" ? (
+                    <Loader2 className="h-5 w-5 animate-spin text-ink-black" aria-hidden="true" />
+                  ) : (
+                    <div className="h-5 w-5 rounded-full border-2 border-ink-black/30" aria-hidden="true" />
+                  )}
+                  <span className={`font-ui text-sm ${step.status === "done" ? "text-muted-foreground line-through" : step.status === "active" ? "font-bold" : "text-muted-foreground/50"}`}>
+                    {step.label}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* How it works — 3 step cards */}
+        <div className="mb-20">
+          <div className="text-center mb-10">
+            <div className="eyebrow text-ink-black">How It Works</div>
+          </div>
+          <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
+            <div className="p-8 pill border border-ink-black bg-paper-white">
+              <div className="font-heading text-5xl font-light mb-4">01</div>
+              <h3 className="font-ui text-lg font-bold uppercase tracking-wide mb-2">Repay on Ethereum</h3>
+              <p className="font-ui text-sm text-muted-foreground">
+                Borrowers repay loans on Sepolia. The transaction is recorded on-chain — nothing special, just a normal tx.
+              </p>
+            </div>
+            <div className="p-8 pill border border-ink-black bg-eclipse-green eclipse-glow">
+              <div className="font-heading text-5xl font-light mb-4">02</div>
+              <h3 className="font-ui text-lg font-bold uppercase tracking-wide mb-2">Verify via Attestcoin</h3>
+              <p className="font-ui text-sm text-ink-black">
+                A cryptographic proof of the Sepolia tx is generated and verified on Creditcoin through the BlockProver precompile.
+              </p>
+            </div>
+            <div className="p-8 pill border border-ink-black bg-paper-white">
+              <div className="font-heading text-5xl font-light mb-4">03</div>
+              <h3 className="font-ui text-lg font-bold uppercase tracking-wide mb-2">Borrow Better</h3>
+              <p className="font-ui text-sm text-muted-foreground">
+                Verified repayments become a credit score on Creditcoin, unlocking lower interest rates and higher borrowing limits.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Tabs — Repayment History / Active Loans */}
+        <div className="mb-20">
+          <div className="flex gap-2 mb-6 border-b border-ink-black">
+            <button className="font-ui text-sm uppercase tracking-[0.1em] px-5 py-3 border-b-2 border-ink-black font-bold">
+              Repayment History
+            </button>
+            <button className="font-ui text-sm uppercase tracking-[0.1em] px-5 py-3 border-b-2 border-transparent text-muted-foreground hover:text-ink-black">
+              Active Loans
+            </button>
+          </div>
+
+          {/* Repayment History tab content */}
+          <div>
+            {isLoading ? (
               <div className="space-y-3">
-                {verificationSteps.map((step, i) => (
-                  <div key={i} className="flex items-center gap-3">
-                    {step.status === "done" ? (
-                      <CheckCircle2 className="h-5 w-5 text-primary" aria-hidden="true" />
-                    ) : step.status === "active" ? (
-                      <Loader2 className="h-5 w-5 animate-spin text-primary" aria-hidden="true" />
-                    ) : (
-                      <div className="h-5 w-5 rounded-full border-2 border-border" aria-hidden="true" />
-                    )}
-                    <span
-                      className={`text-sm ${
-                        step.status === "done"
-                          ? "text-muted-foreground line-through"
-                          : step.status === "active"
-                            ? "text-foreground font-medium"
-                            : "text-muted-foreground/50"
-                      }`}
-                    >
-                      {step.label}
-                    </span>
+                <div className="skeleton h-20" />
+                <div className="skeleton h-20" />
+                <div className="skeleton h-20" />
+              </div>
+            ) : repaymentHistory.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-16 text-center p-8 pill border border-ink-black">
+                <Clock className="mb-3 h-8 w-8 text-muted-foreground/50" aria-hidden="true" />
+                <p className="font-ui text-sm text-muted-foreground">
+                  No repayments verified yet. Import your repayment history to build your credit score.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {repaymentHistory.map((record, i) => (
+                  <div
+                    key={i}
+                    className="flex flex-col gap-3 p-5 pill border border-ink-black bg-paper-white sm:flex-row sm:items-center sm:justify-between"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-eclipse-green">
+                        <CheckCircle2 className="h-5 w-5 text-ink-black" aria-hidden="true" />
+                      </div>
+                      <div>
+                        <div className="font-ui text-sm font-bold">
+                          Repaid {record.amount}
+                        </div>
+                        <div className="font-label text-xs text-muted-foreground">
+                          Loan #{record.loanId} · {record.chain} · {record.timestamp}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className="font-ui text-xs uppercase tracking-[0.1em] px-3 py-1 pill border border-ink-black bg-eclipse-green">
+                        Verified
+                      </span>
+                      <span className="font-label text-xs text-muted-foreground">
+                        {record.txHash}
+                      </span>
+                    </div>
                   </div>
                 ))}
               </div>
-            </CardContent>
-          </Card>
-        )}
+            )}
+          </div>
 
-        {/* Tabs */}
-        <Tabs defaultValue="history" className="w-full">
-          <TabsList>
-            <TabsTrigger value="history">
-              Repayment History
-            </TabsTrigger>
-            <TabsTrigger value="loans">
-              Active Loans
-            </TabsTrigger>
-            <TabsTrigger value="how">
-              How It Works
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="history" className="mt-4">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-sm font-medium text-muted-foreground">
-                  Verified Cross-Chain Repayments
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {isLoading ? (
-                  <div className="space-y-3">
-                    <div className="skeleton h-16 rounded-lg" />
-                    <div className="skeleton h-16 rounded-lg" />
-                  </div>
-                ) : repaymentHistory.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-12 text-center">
-                    <Clock className="mb-2 h-8 w-8 text-muted-foreground/50" aria-hidden="true" />
-                    <p className="text-sm text-muted-foreground">
-                      No repayments verified yet. Import your repayment history to build your credit score.
-                    </p>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {repaymentHistory.map((record, i) => (
-                      <div
-                        key={i}
-                        className="flex flex-col gap-3 rounded-lg border border-border bg-muted/50 p-4 sm:flex-row sm:items-center sm:justify-between"
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/15">
-                            <CheckCircle2 className="h-5 w-5 text-primary" aria-hidden="true" />
-                          </div>
-                          <div>
-                            <div className="text-sm font-medium">
-                              Repaid {record.amount}
-                            </div>
-                            <div className="text-xs text-muted-foreground">
-                              Loan #{record.loanId} · {record.chain} · {record.timestamp}
-                            </div>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Badge variant="outline" className="border-primary/30 text-primary">
-                            Verified On-Chain
-                          </Badge>
-                          <span className="font-mono text-xs text-muted-foreground">
-                            {record.txHash}
-                          </span>
-                        </div>
+          {/* Active Loans (always rendered, hidden via CSS) */}
+          {loans.length > 0 && (
+            <div className="mt-6 space-y-3">
+              {loans.map((loan, i) => (
+                <div
+                  key={i}
+                  className="flex flex-col gap-3 p-5 pill border border-ink-black bg-paper-white sm:flex-row sm:items-center sm:justify-between"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-ink-black">
+                      <Coins className="h-5 w-5 text-ink-black" aria-hidden="true" />
+                    </div>
+                    <div>
+                      <div className="font-ui text-sm font-bold">
+                        Borrowed {loan.principal}
                       </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="loans" className="mt-4">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-sm font-medium text-muted-foreground">
-                  Your Loans on Creditcoin
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {loans.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-12 text-center">
-                    <Lock className="mb-2 h-8 w-8 text-muted-foreground/50" aria-hidden="true" />
-                    <p className="text-sm text-muted-foreground">
-                      No active loans. Build your credit score first to unlock borrowing.
-                    </p>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {loans.map((loan, i) => (
-                      <div
-                        key={i}
-                        className="flex flex-col gap-3 rounded-lg border border-border bg-muted/50 p-4 sm:flex-row sm:items-center sm:justify-between"
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-secondary">
-                            <Coins className="h-5 w-5 text-secondary-foreground" aria-hidden="true" />
-                          </div>
-                          <div>
-                            <div className="text-sm font-medium">
-                              Borrowed {loan.principal}
-                            </div>
-                            <div className="text-xs text-muted-foreground">
-                              Loan #{loan.loanId} · {loan.interestRate} APR · Collateral: {loan.collateral}
-                            </div>
-                          </div>
-                        </div>
-                        <Badge variant="outline">
-                          {loan.status === "active" ? "Active" : "Repaid"}
-                        </Badge>
+                      <div className="font-label text-xs text-muted-foreground">
+                        Loan #{loan.loanId} · {loan.interestRate} APR · Collateral: {loan.collateral}
                       </div>
-                    ))}
+                    </div>
                   </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="how" className="mt-4">
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-primary/15">
-                    <span className="text-lg font-bold text-primary">1</span>
-                  </div>
-                  <h3 className="mb-1 font-semibold">Repay on Ethereum</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Borrowers repay loans on Ethereum Sepolia. The repayment transaction is recorded on-chain.
-                  </p>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-primary/15">
-                    <span className="text-lg font-bold text-primary">2</span>
-                  </div>
-                  <h3 className="mb-1 font-semibold">Verify via Attestcoin Protocol</h3>
-                  <p className="text-sm text-muted-foreground">
-                    The Attestcoin Protocol generates a cryptographic proof of the Sepolia transaction and verifies it
-                    on Creditcoin via the BlockProver precompile — no oracle, no intermediary.
-                  </p>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-primary/15">
-                    <span className="text-lg font-bold text-primary">3</span>
-                  </div>
-                  <h3 className="mb-1 font-semibold">Borrow with better terms</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Your verified repayment history becomes a credit score on Creditcoin, unlocking lower interest rates
-                    and higher borrowing limits.
-                  </p>
-                </CardContent>
-              </Card>
+                  <span className="font-ui text-xs uppercase tracking-[0.1em] px-3 py-1 pill border border-ink-black">
+                    {loan.status === "active" ? "Active" : "Repaid"}
+                  </span>
+                </div>
+              ))}
             </div>
-          </TabsContent>
-        </Tabs>
+          )}
+        </div>
       </main>
+
+      {/* Footer — full-bleed black band */}
+      <footer className="bg-ink-black text-paper-white">
+        <div className="mx-auto max-w-[1200px] px-5 py-20">
+          <div className="flex flex-col md:flex-row justify-between gap-10">
+            <div>
+              <div className="font-ui text-2xl font-bold uppercase tracking-tight mb-4">CreditPass</div>
+              <p className="font-ui text-sm text-paper-white/60 max-w-xs">
+                Cross-chain credit passport powered by the Attestcoin Protocol.
+              </p>
+            </div>
+            <div className="flex flex-col gap-3">
+              <div className="eyebrow text-paper-white mb-2">Links</div>
+              <a href="https://github.com/DruxAMB/creditpass" target="_blank" rel="noopener noreferrer" className="font-ui text-sm uppercase tracking-[0.1em] hover:text-eclipse-green transition-colors">
+                GitHub →
+              </a>
+              <a href="https://creditcoin-testnet.blockscout.com" target="_blank" rel="noopener noreferrer" className="font-ui text-sm uppercase tracking-[0.1em] hover:text-eclipse-green transition-colors">
+                Blockscout →
+              </a>
+              <a href="https://www.attestcoin.com" target="_blank" rel="noopener noreferrer" className="font-ui text-sm uppercase tracking-[0.1em] hover:text-eclipse-green transition-colors">
+                Attestcoin Protocol →
+              </a>
+            </div>
+          </div>
+          <div className="mt-16 pt-8 border-t border-paper-white/20">
+            <p className="font-label text-xs text-paper-white/40 uppercase tracking-[0.2em]">
+              Built for Creditcoin Hackathon · 2025
+            </p>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }
 
 function getScoreTier(score: number) {
-  if (score >= 900) return { label: "Platinum", badgeClass: "bg-cyan-500/20 text-cyan-300" };
-  if (score >= 750) return { label: "Gold", badgeClass: "bg-amber-500/20 text-amber-300" };
-  if (score >= 600) return { label: "Silver", badgeClass: "bg-slate-400/20 text-slate-200" };
-  if (score >= 300) return { label: "Bronze", badgeClass: "bg-orange-600/20 text-orange-300" };
-  return { label: "No History", badgeClass: "bg-destructive/20 text-destructive" };
+  if (score >= 900) return { label: "Platinum", badgeClass: "bg-eclipse-green text-ink-black" };
+  if (score >= 750) return { label: "Gold", badgeClass: "bg-eclipse-green text-ink-black" };
+  if (score >= 600) return { label: "Silver", badgeClass: "bg-paper-white text-ink-black" };
+  if (score >= 300) return { label: "Bronze", badgeClass: "bg-paper-white text-ink-black" };
+  return { label: "No History", badgeClass: "bg-paper-white text-ink-black" };
 }
 
 function getLoanTerms(score: number) {
