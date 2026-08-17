@@ -247,16 +247,16 @@ export default function Home() {
       // Client-side: user signs the tx with their own wallet
       announce("Please confirm the loan transaction in your wallet...");
       try {
-        const eth = (window as unknown as { ethereum?: ethers.BrowserProvider }).ethereum;
+        const eth = (window as unknown as { ethereum?: { request: (args: { method: string; params?: unknown[] }) => Promise<unknown> } }).ethereum;
         if (!eth) {
           throw new Error("No wallet found. Connect your wallet first.");
         }
-        const provider = new ethers.BrowserProvider(eth);
+        const provider = new ethers.BrowserProvider(eth as unknown as ethers.Eip1193Provider);
         const network = await provider.getNetwork();
         const creditcoinChainId = 10203;
         if (Number(network.chainId) !== creditcoinChainId) {
           // Try to switch to Creditcoin testnet
-          await eth.request?.({
+          await eth.request({
             method: "wallet_switchEthereumChain",
             params: [{ chainId: "0x27db" }],
           });
