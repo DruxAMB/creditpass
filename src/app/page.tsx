@@ -52,6 +52,7 @@ export default function Home() {
   const [verifyError, setVerifyError] = useState<string | null>(null);
   const [scoreAnimating, setScoreAnimating] = useState(false);
   const [showHero, setShowHero] = useState(true);
+  const [heroExiting, setHeroExiting] = useState(false);
   const [txHashInput, setTxHashInput] = useState("");
   const [isTakingLoan, setIsTakingLoan] = useState(false);
   const [loanError, setLoanError] = useState<string | null>(null);
@@ -116,11 +117,43 @@ export default function Home() {
     }
   }
 
-  function scrollToDashboard() {
-    setShowHero(false);
+  function handleDemo() {
+    setHeroExiting(true);
     setTimeout(() => {
-      dashboardRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-    }, 100);
+      setShowHero(false);
+      setHeroExiting(false);
+      setTimeout(() => {
+        dashboardRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 50);
+    }, 600);
+  }
+
+  async function handleConnectAndBorrow() {
+    // If wallet not connected, connect first
+    if (!walletAddress) {
+      setWalletError(null);
+      try {
+        const eth = (window as unknown as { ethereum?: { request: (args: { method: string }) => Promise<string[]> } }).ethereum;
+        if (!eth) {
+          setWalletError("No wallet detected. Please install MetaMask or Rainbow browser extension and refresh the page.");
+          return;
+        }
+        await eth.request({ method: "eth_requestAccounts" });
+      } catch (err) {
+        const msg = friendlyError(err, "Connecting wallet");
+        setWalletError(msg);
+        return;
+      }
+    }
+    // Then transition to dashboard
+    setHeroExiting(true);
+    setTimeout(() => {
+      setShowHero(false);
+      setHeroExiting(false);
+      setTimeout(() => {
+        dashboardRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 50);
+    }, 600);
   }
 
   const connectWallet = useCallback(async () => {
@@ -380,8 +413,8 @@ export default function Home() {
 
       {/* Hero — full-bleed black band with hairline serif headline */}
       {showHero && (
-        <section className="bg-ink-black text-paper-white animate-in">
-          <div className="mx-auto max-w-[1200px] px-5 py-20 md:py-32 flex flex-col items-center text-center">
+        <section className={`bg-ink-black text-paper-white ${heroExiting ? "hero-exit" : "animate-in"}`}>
+          <div className="mx-auto max-w-[1200px] px-5 min-h-[calc(100vh-65px)] flex flex-col items-center justify-center text-center py-20">
             <span className="eyebrow text-paper-white mb-6">CreditPass is</span>
             <h1 className="font-heading font-light leading-[0.85] tracking-[-0.04em] text-5xl md:text-7xl lg:text-8xl">
               Your Ethereum Repayments
@@ -395,50 +428,56 @@ export default function Home() {
             </p>
             <div className="mt-10 flex flex-col gap-3 sm:flex-row">
               <button
-                onClick={scrollToDashboard}
-                className="font-ui text-base uppercase tracking-[0.1em] px-6 py-2.5 pill bg-eclipse-green text-ink-black border border-ink-black hover:border-2 transition-all"
+                onClick={handleDemo}
+                className="font-ui text-base uppercase tracking-[0.1em] px-6 py-2.5 pill bg-eclipse-green text-ink-black border border-ink-black hover:scale-105 transition-transform"
               >
                 Try the Demo
               </button>
               <button
-                onClick={() => window.open("https://github.com/DruxAMB/creditpass", "_blank")}
+                onClick={handleConnectAndBorrow}
                 className="font-ui text-base uppercase tracking-[0.1em] px-6 py-2.5 pill bg-transparent text-paper-white border border-paper-white hover:bg-paper-white hover:text-ink-black transition-colors"
               >
-                View Source →
+                <Wallet className="h-4 w-4 inline mr-2" />
+                Connect &amp; Borrow
               </button>
             </div>
+            <p className="mt-6 font-label text-xs text-paper-white/40 uppercase tracking-[0.2em]">
+              Demo uses sample data · Connect &amp; Borrow uses your wallet
+            </p>
           </div>
         </section>
       )}
 
-      {/* Marquee strip */}
-      <div className="border-y border-ink-black overflow-hidden py-4">
-        <div className="flex gap-8 font-ui text-2xl font-bold uppercase tracking-tight whitespace-nowrap animate-marquee">
-          <span>Cross-Chain Credit</span>
-          <span>—</span>
-          <span>No Oracle Required</span>
-          <span>—</span>
-          <span>Attestcoin Protocol</span>
-          <span>—</span>
-          <span>Cryptographic Proof</span>
-          <span>—</span>
-          <span>Creditcoin Testnet</span>
-          <span>—</span>
-          <span>Cross-Chain Credit</span>
-          <span>—</span>
-          <span>No Oracle Required</span>
-          <span>—</span>
-          <span>Attestcoin Protocol</span>
-          <span>—</span>
-          <span>Cryptographic Proof</span>
-          <span>—</span>
-          <span>Creditcoin Testnet</span>
-          <span>—</span>
+      {/* Marquee strip — only after hero is gone */}
+      {!showHero && (
+        <div className="border-y border-ink-black overflow-hidden py-4 dashboard-enter">
+          <div className="flex gap-8 font-ui text-2xl font-bold uppercase tracking-tight whitespace-nowrap animate-marquee">
+            <span>Cross-Chain Credit</span>
+            <span>—</span>
+            <span>No Oracle Required</span>
+            <span>—</span>
+            <span>Attestcoin Protocol</span>
+            <span>—</span>
+            <span>Cryptographic Proof</span>
+            <span>—</span>
+            <span>Creditcoin Testnet</span>
+            <span>—</span>
+            <span>Cross-Chain Credit</span>
+            <span>—</span>
+            <span>No Oracle Required</span>
+            <span>—</span>
+            <span>Attestcoin Protocol</span>
+            <span>—</span>
+            <span>Cryptographic Proof</span>
+            <span>—</span>
+            <span>Creditcoin Testnet</span>
+            <span>—</span>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Dashboard */}
-      <main ref={dashboardRef} className="mx-auto max-w-[1200px] px-5 py-20">
+      <main ref={dashboardRef} className={`mx-auto max-w-[1200px] px-5 py-20 ${!showHero ? "dashboard-enter" : ""}`}>
         {/* Error states */}
         {walletError && (
           <div className="mb-6 flex items-center gap-3 p-5 pill border border-ink-black bg-paper-white animate-in">

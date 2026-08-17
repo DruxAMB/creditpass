@@ -156,6 +156,24 @@
   animation: marquee 20s linear infinite;
 }
 
+@keyframes hero-exit-anim {
+  0% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(0.95) translateY(-30px); }
+}
+
+.hero-exit {
+  animation: hero-exit-anim 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes dashboard-enter {
+  from { opacity: 0; transform: translateY(40px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.dashboard-enter {
+  animation: dashboard-enter 0.5s ease-out forwards;
+}
+
 @keyframes skeleton-pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.5; }
