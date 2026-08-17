@@ -68,6 +68,7 @@ export default function Home() {
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
   const [isConnectingWallet, setIsConnectingWallet] = useState(false);
   const [walletError, setWalletError] = useState<string | null>(null);
+  const [wrongChain, setWrongChain] = useState(false);
   const liveRegionRef = useRef<HTMLDivElement>(null);
   const dashboardRef = useRef<HTMLDivElement>(null);
 
@@ -137,6 +138,9 @@ export default function Home() {
       if (accounts && accounts.length > 0) {
         setWalletAddress(accounts[0]);
         announce(`Wallet connected: ${accounts[0].slice(0, 6)}...${accounts[0].slice(-4)}`);
+        // Check chain
+        const chainIdHex = await eth.request({ method: "eth_chainId" });
+        setWrongChain(Number(chainIdHex) !== 10203);
       }
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Failed to connect wallet";
@@ -146,8 +150,53 @@ export default function Home() {
     }
   }, []);
 
+  const switchToCreditcoin = useCallback(async () => {
+    try {
+      const eth = (window as unknown as { ethereum?: { request: (args: { method: string; params?: unknown[] }) => Promise<unknown> } }).ethereum;
+      if (!eth) return;
+      try {
+        await eth.request({
+          method: "wallet_switchEthereumChain",
+          params: [{ chainId: "0x27db" }],
+        });
+      } catch (switchErr) {
+        // 4902 = chain not added to wallet yet
+        if (switchErr && typeof switchErr === "object" && "code" in switchErr && switchErr.code === 4902) {
+          await eth.request({
+            method: "wallet_addEthereumChain",
+            params: [{
+              chainId: "0x27db",
+              chainName: "Creditcoin Testnet",
+              nativeCurrency: { name: "Creditcoin", symbol: "tCTC", decimals: 18 },
+              rpcUrls: ["https://rpc.cc3-testnet.creditcoin.network"],
+              blockExplorerUrls: ["https://creditcoin-testnet.blockscout.com"],
+            }],
+          });
+        } else {
+          throw switchErr;
+        }
+      }
+      setWrongChain(false);
+      announce("Switched to Creditcoin testnet.");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Failed to switch network";
+      setWalletError(msg);
+    }
+  }, []);
+
+  // Listen for chain changes
+  useEffect(() => {
+    if (!walletAddress) return;
+    const eth = (window as unknown as { ethereum?: { on?: (event: string, handler: (chainId: string) => void) => void; removeListener?: (event: string, handler: (chainId: string) => void) => void } }).ethereum;
+    if (!eth || !eth.on) return;
+    const handler = (chainId: string) => setWrongChain(Number(chainId) !== 10203);
+    eth.on("chainChanged", handler);
+    return () => { eth.removeListener?.("chainChanged", handler); };
+  }, [walletAddress]);
+
   const disconnectWallet = useCallback(() => {
     setWalletAddress(null);
+    setWrongChain(false);
     setCreditScore(0);
     setVerifiedRepayments(0);
     setTotalVerifiedAmount("0");
@@ -255,11 +304,8 @@ export default function Home() {
         const network = await provider.getNetwork();
         const creditcoinChainId = 10203;
         if (Number(network.chainId) !== creditcoinChainId) {
-          // Try to switch to Creditcoin testnet
-          await eth.request({
-            method: "wallet_switchEthereumChain",
-            params: [{ chainId: "0x27db" }],
-          });
+          // Try to switch — switchToCreditcoin handles add+switch
+          await switchToCreditcoin();
         }
         const signer = await provider.getSigner();
         const lender = new ethers.Contract(
@@ -328,7 +374,7 @@ export default function Home() {
     } finally {
       setIsTakingLoan(false);
     }
-  }, [loanTerms.maxBorrow, walletAddress]);
+  }, [loanTerms.maxBorrow, walletAddress, switchToCreditcoin]);
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -352,6 +398,12 @@ export default function Home() {
                   <Wallet className="h-4 w-4 text-primary" aria-hidden="true" />
                   <span className="font-mono">{walletAddress.slice(0, 6)}...{walletAddress.slice(-4)}</span>
                 </div>
+                {wrongChain && (
+                  <Button onClick={switchToCreditcoin} variant="outline" size="sm" className="h-8 border-destructive/40 text-destructive">
+                    <AlertCircle className="h-3.5 w-3.5" />
+                    Wrong Network
+                  </Button>
+                )}
                 <Button onClick={disconnectWallet} variant="ghost" size="sm" className="h-8 px-2">
                   <LogOut className="h-3.5 w-3.5" />
                 </Button>
@@ -635,7 +687,7 @@ export default function Home() {
                     <div className="mt-3 flex flex-col gap-2 sm:flex-row">
                       <Button
                         onClick={handleTakeLoan}
-                        disabled={isTakingLoan}
+                        disabled={isTakingLoan || (walletAddress ? wrongChain : false)}
                         className="flex-1 min-h-[44px]"
                         size="lg"
                       >
@@ -670,9 +722,11 @@ export default function Home() {
                   )}
                   {creditScore > 0 && (
                     <p className="mt-2 text-xs text-muted-foreground">
-                      {walletAddress
-                        ? "You will sign the loan transaction with your connected wallet on Creditcoin testnet."
-                        : "Without a connected wallet, the loan is issued via a demo relayer. Connect your wallet to borrow with your own address."}
+                      {walletAddress && wrongChain
+                        ? "Wrong network. Click \"Wrong Network\" in the header to switch to Creditcoin testnet."
+                        : walletAddress
+                          ? "You will sign the loan transaction with your connected wallet on Creditcoin testnet."
+                          : "Without a connected wallet, the loan is issued via a demo relayer. Connect your wallet to borrow with your own address."}
                     </p>
                   )}
                 </>
