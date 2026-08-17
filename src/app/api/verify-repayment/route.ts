@@ -137,8 +137,18 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error("Verification failed:", error);
+    const rawMsg = error instanceof Error ? error.message : "Verification failed";
+
+    // Check for known contract reverts
+    if (rawMsg.includes("Transaction already verified")) {
+      return NextResponse.json(
+        { error: "This transaction has already been verified and recorded. Try a different Sepolia tx hash." },
+        { status: 409 }
+      );
+    }
+
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Verification failed" },
+      { error: rawMsg },
       { status: 500 }
     );
   }
