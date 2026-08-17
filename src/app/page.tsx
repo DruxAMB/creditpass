@@ -53,6 +53,7 @@ export default function Home() {
   const [scoreAnimating, setScoreAnimating] = useState(false);
   const [showHero, setShowHero] = useState(true);
   const [heroExiting, setHeroExiting] = useState(false);
+  const [demoMode, setDemoMode] = useState(false);
   const [txHashInput, setTxHashInput] = useState("");
   const [isTakingLoan, setIsTakingLoan] = useState(false);
   const [loanError, setLoanError] = useState<string | null>(null);
@@ -80,6 +81,11 @@ export default function Home() {
     setIsLoading(true);
     setLoadError(null);
     try {
+      // In live mode, require a wallet address — no demo fallback
+      if (!demoMode && !walletAddress) {
+        setIsLoading(false);
+        return;
+      }
       const params = walletAddress ? `?address=${walletAddress}` : "";
       const res = await fetch(`/api/credit-score${params}`);
       if (!res.ok) {
@@ -109,7 +115,7 @@ export default function Home() {
     } finally {
       setIsLoading(false);
     }
-  }, [walletAddress]);
+  }, [walletAddress, demoMode]);
 
   useEffect(() => {
     loadScore();
@@ -125,6 +131,7 @@ export default function Home() {
   }
 
   function handleDemo() {
+    setDemoMode(true);
     setHeroExiting(true);
     setTimeout(() => {
       setShowHero(false);
@@ -136,6 +143,7 @@ export default function Home() {
   }
 
   async function handleConnectAndBorrow() {
+    setDemoMode(false);
     // If wallet not connected, connect first
     if (!walletAddress) {
       setWalletError(null);
@@ -204,9 +212,17 @@ export default function Home() {
   }, [disconnect]);
 
   const handleImportRepayment = useCallback(async (customTxHash?: string) => {
-    const txHash = customTxHash || txHashInput.trim() || "0xc209d676ae17e2f2d938535561aab96bab772b69fdadcc11918d9d2b945bf79e";
+    const inputHash = txHashInput.trim();
 
-    if (txHashInput.trim() && !/^0x[a-fA-F0-9]{64}$/.test(txHash)) {
+    // In live mode, require a tx hash — no demo fallback
+    if (!demoMode && !inputHash && !customTxHash) {
+      setVerifyError("Please enter a Sepolia transaction hash to verify a repayment.");
+      return;
+    }
+
+    const txHash = customTxHash || inputHash || (demoMode ? "0xc209d676ae17e2f2d938535561aab96bab772b69fdadcc11918d9d2b945bf79e" : "");
+
+    if (txHash && !/^0x[a-fA-F0-9]{64}$/.test(txHash)) {
       setVerifyError("Invalid transaction hash. Must be 0x followed by 64 hex characters.");
       return;
     }
@@ -283,7 +299,7 @@ export default function Home() {
 
     await sleep(500);
     setIsVerifying(false);
-  }, [txHashInput, walletAddress]);
+  }, [txHashInput, walletAddress, demoMode]);
 
   const handleTakeLoan = useCallback(async () => {
     setIsTakingLoan(true);
@@ -327,8 +343,16 @@ export default function Home() {
       return;
     }
 
-    // Server-side fallback (demo relayer — loan issued to deployer address)
-    announce("Submitting loan request via relayer on Creditcoin...");
+    // Server-side fallback — only allowed in demo mode
+    if (!demoMode) {
+      setLoanError("Connect your wallet to take a loan with your own address.");
+      announce("Loan failed: wallet not connected.");
+      setIsTakingLoan(false);
+      return;
+    }
+
+    // Demo relayer — loan issued to deployer address
+    announce("Submitting loan request via demo relayer on Creditcoin...");
     try {
       const response = await fetch("/api/take-loan", {
         method: "POST",
@@ -362,7 +386,7 @@ export default function Home() {
     } finally {
       setIsTakingLoan(false);
     }
-  }, [loanTerms.maxBorrow, walletAddress, connectorClient]);
+  }, [loanTerms.maxBorrow, walletAddress, connectorClient, demoMode]);
 
   return (
     <div className="min-h-screen bg-paper-white text-ink-black">
@@ -617,7 +641,7 @@ export default function Home() {
 
                 <div className="mt-5">
                   <label htmlFor="txhash" className="eyebrow text-muted-foreground block mb-2">
-                    Sepolia tx hash (optional — defaults to demo tx)
+                    {demoMode ? "Sepolia tx hash (optional — defaults to demo tx)" : "Sepolia tx hash (required)"}
                   </label>
                   <input
                     id="txhash"
@@ -649,7 +673,7 @@ export default function Home() {
                   <div className="mt-4 flex flex-col gap-3 sm:flex-row">
                     <button
                       onClick={handleTakeLoan}
-                      disabled={isTakingLoan || (walletAddress ? wrongChain : false)}
+                      disabled={isTakingLoan || (walletAddress ? wrongChain : !demoMode)}
                       className="flex-1 font-ui text-base uppercase tracking-[0.1em] px-6 py-3 pill bg-eclipse-green text-ink-black border border-ink-black hover:border-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {isTakingLoan ? (
@@ -677,7 +701,9 @@ export default function Home() {
                       ? "Wrong network. Click \"Wrong Network\" in the header to switch to Creditcoin testnet."
                       : walletAddress
                         ? "You will sign the loan transaction with your connected wallet on Creditcoin testnet."
-                        : "Without a connected wallet, the loan is issued via a demo relayer. Connect your wallet to borrow with your own address."}
+                        : demoMode
+                          ? "Demo mode — loan is issued via a demo relayer. Connect your wallet to borrow with your own address."
+                          : "Connect your wallet to take a loan."}
                   </p>
                 )}
               </>
