@@ -413,8 +413,8 @@ export default function Home() {
 
       {/* Hero — full-bleed black band with hairline serif headline */}
       {showHero && (
-        <section className={`bg-ink-black text-paper-white flex flex-col ${heroExiting ? "hero-exit" : "animate-in"}`}>
-          <div className="flex-1 flex flex-col items-center justify-center text-center px-5 py-20 min-h-[calc(100vh-65px)]">
+        <section className={`bg-ink-black text-paper-white flex flex-col min-h-[calc(100vh-65px)] ${heroExiting ? "hero-exit" : "animate-in"}`}>
+          <div className="flex-1 flex flex-col items-center justify-center text-center px-5 py-12">
             <span className="eyebrow text-paper-white mb-6">CreditPass is</span>
             <h1 className="font-heading font-light leading-[0.85] tracking-[-0.04em] text-5xl md:text-7xl lg:text-8xl">
               Your Ethereum Repayments
