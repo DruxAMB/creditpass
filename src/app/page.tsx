@@ -290,6 +290,7 @@ export default function Home() {
         setLoans((prev) => [...prev, newLoan]);
         announce(`Loan #${loanId} issued on Creditcoin at ${Number(loanData[2]) / 100}% APR.`);
       } catch (err) {
+        console.error("Take loan (client-side) failed:", err);
         const msg = friendlyError(err, "Taking loan");
         setLoanError(msg);
         announce(`Loan failed: ${msg}`);
