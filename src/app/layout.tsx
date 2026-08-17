@@ -14,16 +14,27 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "CreditPass — Cross-Chain Credit Passport",
-  description: "Your repayment history on Ethereum is your credit score on Creditcoin — verified cryptographically via the Attestcoin Protocol.",
+  description: "Your repayment history on Ethereum is your credit score on Creditcoin — verified cryptographically via the Attestcoin Protocol. No oracle, no intermediary.",
+  openGraph: {
+    title: "CreditPass — Cross-Chain Credit Passport",
+    description: "Your repayment history on Ethereum is your credit score on Creditcoin — verified cryptographically via the Attestcoin Protocol.",
+    type: "website",
+    url: "https://creditpass-mauve.vercel.app",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "CreditPass — Cross-Chain Credit Passport",
+    description: "Your repayment history on Ethereum is your credit score on Creditcoin — verified via the Attestcoin Protocol.",
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`dark ${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col bg-background text-foreground">{children}</body>
     </html>
   );
 }
