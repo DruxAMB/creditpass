@@ -1,0 +1,244 @@
+export const LOAN_SOURCE_ABI = [
+  {
+    inputs: [
+      { name: "borrower", type: "address" },
+      { name: "amount", type: "uint256" },
+      { name: "durationDays", type: "uint256" },
+    ],
+    name: "createLoan",
+    outputs: [{ name: "loanId", type: "uint256" }],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [{ name: "loanId", type: "uint256" }],
+    name: "repay",
+    outputs: [],
+    stateMutability: "payable",
+    type: "function",
+  },
+  {
+    inputs: [{ name: "loanId", type: "uint256" }],
+    name: "getRepaymentData",
+    outputs: [
+      { name: "borrower", type: "address" },
+      { name: "amount", type: "uint256" },
+      { name: "repaid", type: "bool" },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [{ name: "loanId", type: "uint256" }],
+    name: "loans",
+    outputs: [
+      { name: "borrower", type: "address" },
+      { name: "amount", type: "uint256" },
+      { name: "dueDate", type: "uint256" },
+      { name: "repaid", type: "bool" },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    name: "nextLoanId",
+    outputs: [{ name: "", type: "uint256" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      { indexed: true, name: "loanId", type: "uint256" },
+      { indexed: true, name: "borrower", type: "address" },
+      { name: "amount", type: "uint256" },
+      { name: "dueDate", type: "uint256" },
+    ],
+    name: "LoanCreated",
+    type: "event",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      { indexed: true, name: "loanId", type: "uint256" },
+      { indexed: true, name: "borrower", type: "address" },
+      { name: "amount", type: "uint256" },
+      { name: "timestamp", type: "uint256" },
+    ],
+    name: "Repayment",
+    type: "event",
+  },
+] as const;
+
+export const CREDIT_PASS_ABI = [
+  {
+    inputs: [
+      { name: "blockHeader", type: "bytes" },
+      { name: "proof", type: "bytes" },
+      { name: "txData", type: "bytes" },
+      { name: "loanId", type: "uint256" },
+      { name: "borrower", type: "address" },
+      { name: "amount", type: "uint256" },
+      { name: "txHash", type: "bytes32" },
+    ],
+    name: "verifyRepayment",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [{ name: "borrower", type: "address" }],
+    name: "getCreditScore",
+    outputs: [
+      { name: "score", type: "uint256" },
+      { name: "verifiedRepayments", type: "uint256" },
+      { name: "totalVerifiedAmount", type: "uint256" },
+      { name: "lastUpdated", type: "uint256" },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [{ name: "borrower", type: "address" }],
+    name: "getRepaymentCount",
+    outputs: [{ name: "", type: "uint256" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [
+      { name: "borrower", type: "address" },
+      { name: "index", type: "uint256" },
+    ],
+    name: "getRepaymentRecord",
+    outputs: [
+      { name: "loanId", type: "uint256" },
+      { name: "borrowerAddr", type: "address" },
+      { name: "amount", type: "uint256" },
+      { name: "timestamp", type: "uint256" },
+      { name: "txHash", type: "bytes32" },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [{ name: "score", type: "uint256" }],
+    name: "getScoreTier",
+    outputs: [{ name: "", type: "string" }],
+    stateMutability: "pure",
+    type: "function",
+  },
+  {
+    inputs: [{ name: "borrower", type: "address" }],
+    name: "creditScores",
+    outputs: [
+      { name: "score", type: "uint256" },
+      { name: "verifiedRepayments", type: "uint256" },
+      { name: "totalVerifiedAmount", type: "uint256" },
+      { name: "lastUpdated", type: "uint256" },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      { indexed: true, name: "borrower", type: "address" },
+      { name: "newScore", type: "uint256" },
+      { name: "verifiedRepayments", type: "uint256" },
+    ],
+    name: "CreditScoreUpdated",
+    type: "event",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      { indexed: true, name: "borrower", type: "address" },
+      { name: "loanId", type: "uint256" },
+      { name: "amount", type: "uint256" },
+      { name: "txHash", type: "bytes32" },
+    ],
+    name: "RepaymentVerified",
+    type: "event",
+  },
+] as const;
+
+export const CREDIT_LENDER_ABI = [
+  {
+    inputs: [{ name: "_creditPass", type: "address" }],
+    name: "constructor",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "constructor",
+  },
+  {
+    inputs: [{ name: "borrower", type: "address" }],
+    name: "getLoanTerms",
+    outputs: [
+      { name: "interestRate", type: "uint256" },
+      { name: "maxBorrow", type: "uint256" },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [
+      { name: "borrowAmount", type: "uint256" },
+      { name: "durationDays", type: "uint256" },
+    ],
+    name: "borrow",
+    outputs: [],
+    stateMutability: "payable",
+    type: "function",
+  },
+  {
+    inputs: [{ name: "loanId", type: "uint256" }],
+    name: "repay",
+    outputs: [],
+    stateMutability: "payable",
+    type: "function",
+  },
+  {
+    inputs: [{ name: "loanId", type: "uint256" }],
+    name: "getLoan",
+    outputs: [
+      { name: "borrower", type: "address" },
+      { name: "principal", type: "uint256" },
+      { name: "interestRate", type: "uint256" },
+      { name: "collateral", type: "uint256" },
+      { name: "startTime", type: "uint256" },
+      { name: "duration", type: "uint256" },
+      { name: "repaid", type: "bool" },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    name: "getLoanCount",
+    outputs: [{ name: "", type: "uint256" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      { indexed: true, name: "loanId", type: "uint256" },
+      { indexed: true, name: "borrower", type: "address" },
+      { name: "principal", type: "uint256" },
+      { name: "interestRate", type: "uint256" },
+      { name: "collateral", type: "uint256" },
+    ],
+    name: "LoanIssued",
+    type: "event",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      { indexed: true, name: "loanId", type: "uint256" },
+      { indexed: true, name: "borrower", type: "address" },
+      { name: "totalPaid", type: "uint256" },
+    ],
+    name: "LoanRepaid",
+    type: "event",
+  },
+] as const;
