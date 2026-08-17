@@ -184,14 +184,42 @@ export default function Home() {
     }
   }, []);
 
-  // Listen for chain changes
+  // Detect chain changes — event listener + polling fallback
   useEffect(() => {
     if (!walletAddress) return;
-    const eth = (window as unknown as { ethereum?: { on?: (event: string, handler: (chainId: string) => void) => void; removeListener?: (event: string, handler: (chainId: string) => void) => void } }).ethereum;
-    if (!eth || !eth.on) return;
-    const handler = (chainId: string) => setWrongChain(Number(chainId) !== 10203);
-    eth.on("chainChanged", handler);
-    return () => { eth.removeListener?.("chainChanged", handler); };
+
+    const checkChain = async () => {
+      try {
+        const eth = (window as unknown as { ethereum?: { request: (args: { method: string; params?: unknown[] }) => Promise<unknown> } }).ethereum;
+        if (!eth) return;
+        const chainIdHex = await eth.request({ method: "eth_chainId" });
+        setWrongChain(Number(chainIdHex) !== 10203);
+      } catch {
+        // ignore — will retry on next poll
+      }
+    };
+
+    // Check immediately
+    checkChain();
+
+    // Poll every 3s as fallback (Rainbow doesn't always fire chainChanged events)
+    const interval = setInterval(checkChain, 3000);
+
+    // Also try event listener
+    const eth = (window as unknown as { ethereum?: { on?: (event: string, handler: (...args: unknown[]) => void) => void; removeListener?: (event: string, handler: (...args: unknown[]) => void) => void } }).ethereum;
+    if (eth?.on) {
+      const handler = (...args: unknown[]) => {
+        const chainId = args[0] as string;
+        setWrongChain(Number(chainId) !== 10203);
+      };
+      eth.on("chainChanged", handler);
+      return () => {
+        clearInterval(interval);
+        eth.removeListener?.("chainChanged", handler);
+      };
+    }
+
+    return () => clearInterval(interval);
   }, [walletAddress]);
 
   const disconnectWallet = useCallback(() => {
