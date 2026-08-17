@@ -59,7 +59,6 @@ export default function Home() {
   const [dashboardExiting, setDashboardExiting] = useState(false);
   const [demoMode, setDemoMode] = useState(false);
   const [activeTab, setActiveTab] = useState<"repayments" | "loans">("repayments");
-  const [showHowItWorks, setShowHowItWorks] = useState(false);
   const [txHashInput, setTxHashInput] = useState("");
   const [isTakingLoan, setIsTakingLoan] = useState(false);
   const [loanError, setLoanError] = useState<string | null>(null);
@@ -537,8 +536,42 @@ export default function Home() {
 
       {/* Hero — full-bleed black band with hairline serif headline */}
       {showHero && (
-        <section className={`bg-ink-black text-paper-white flex flex-col min-h-[calc(100vh-70px)] ${heroExiting ? "hero-exit" : "hero-enter"}`}>
-          <div className="flex-1 flex flex-col items-center justify-center text-center px-5 py-12">
+        <section className={`relative bg-ink-black text-paper-white flex flex-col min-h-[calc(100vh-70px)] ${heroExiting ? "hero-exit" : "hero-enter"}`}>
+          {/* Floating How It Works cards — desktop only */}
+          <div className="hidden lg:block">
+            <div
+              className="float-card absolute top-12 left-8 max-w-[220px] p-5 pill border border-ink-black bg-paper-white opacity-80 transition-all duration-300 hover:shadow-[0_0_30px_rgba(161,254,160,0.3)]"
+              style={{ "--card-rotate": "-2deg", "--card-delay": "0.3s" } as React.CSSProperties}
+            >
+              <div className="font-heading text-3xl font-light mb-2 text-ink-black">01</div>
+              <h3 className="font-ui text-sm font-bold uppercase tracking-wide mb-1 text-ink-black">Repay on Ethereum</h3>
+              <p className="font-ui text-xs text-muted-foreground">
+                Borrowers repay loans on Sepolia. Just a normal on-chain tx.
+              </p>
+            </div>
+            <div
+              className="float-card absolute top-1/2 -translate-y-1/2 right-8 max-w-[220px] p-5 pill border border-ink-black bg-eclipse-green eclipse-glow opacity-90 transition-all duration-300 hover:shadow-[0_0_40px_rgba(161,254,160,0.5)]"
+              style={{ "--card-rotate": "1.5deg", "--card-delay": "0.5s" } as React.CSSProperties}
+            >
+              <div className="font-heading text-3xl font-light mb-2 text-ink-black">02</div>
+              <h3 className="font-ui text-sm font-bold uppercase tracking-wide mb-1 text-ink-black">Verify via Attestcoin</h3>
+              <p className="font-ui text-xs text-ink-black">
+                Cryptographic proof generated and verified on Creditcoin via BlockProver precompile.
+              </p>
+            </div>
+            <div
+              className="float-card absolute bottom-24 left-12 max-w-[220px] p-5 pill border border-ink-black bg-paper-white opacity-80 transition-all duration-300 hover:shadow-[0_0_30px_rgba(161,254,160,0.3)]"
+              style={{ "--card-rotate": "-1deg", "--card-delay": "0.7s" } as React.CSSProperties}
+            >
+              <div className="font-heading text-3xl font-light mb-2 text-ink-black">03</div>
+              <h3 className="font-ui text-sm font-bold uppercase tracking-wide mb-1 text-ink-black">Borrow Better</h3>
+              <p className="font-ui text-xs text-muted-foreground">
+                Verified repayments become a credit score, unlocking lower rates and higher limits.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex-1 flex flex-col items-center justify-center text-center px-5 py-12 relative z-10">
             <span className="eyebrow text-paper-white mb-6">CreditPass is</span>
             <h1 className="font-heading font-light leading-[0.85] tracking-[-0.04em] text-5xl md:text-7xl lg:text-8xl">
               Your Ethereum Repayments
@@ -864,43 +897,6 @@ export default function Home() {
             </div>
           </div>
         )}
-
-        {/* How it works — collapsible */}
-        <div className="mb-20">
-          <div className="text-center mb-6">
-            <button
-              onClick={() => setShowHowItWorks(!showHowItWorks)}
-              className="eyebrow text-paper-white underline decoration-paper-white/40 underline-offset-4 hover:decoration-eclipse-green hover:text-eclipse-green transition-colors cursor-pointer"
-            >
-              How It Works
-            </button>
-          </div>
-          {showHowItWorks && (
-          <div className="grid grid-cols-1 gap-5 md:grid-cols-3 dashboard-enter">
-            <div className="p-8 pill border border-ink-black bg-paper-white">
-              <div className="font-heading text-5xl font-light mb-4">01</div>
-              <h3 className="font-ui text-lg font-bold uppercase tracking-wide mb-2">Repay on Ethereum</h3>
-              <p className="font-ui text-sm text-muted-foreground">
-                Borrowers repay loans on Sepolia. The transaction is recorded on-chain — nothing special, just a normal tx.
-              </p>
-            </div>
-            <div className="p-8 pill border border-ink-black bg-eclipse-green eclipse-glow">
-              <div className="font-heading text-5xl font-light mb-4">02</div>
-              <h3 className="font-ui text-lg font-bold uppercase tracking-wide mb-2">Verify via Attestcoin</h3>
-              <p className="font-ui text-sm text-ink-black">
-                A cryptographic proof of the Sepolia tx is generated and verified on Creditcoin through the BlockProver precompile.
-              </p>
-            </div>
-            <div className="p-8 pill border border-ink-black bg-paper-white">
-              <div className="font-heading text-5xl font-light mb-4">03</div>
-              <h3 className="font-ui text-lg font-bold uppercase tracking-wide mb-2">Borrow Better</h3>
-              <p className="font-ui text-sm text-muted-foreground">
-                Verified repayments become a credit score on Creditcoin, unlocking lower interest rates and higher borrowing limits.
-              </p>
-            </div>
-          </div>
-          )}
-        </div>
 
         {/* Tabs — Repayment History / Active Loans */}
         <div className="mb-20">
