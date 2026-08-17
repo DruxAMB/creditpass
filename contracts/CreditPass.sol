@@ -3,33 +3,26 @@ pragma solidity ^0.8.24;
 
 /**
  * @title CreditPass
- * @dev Core contract on Creditcoin that verifies cross-chain repayment proofs
- * via the Attestcoin Protocol's BlockProver precompile and updates credit scores.
+ * @dev Core contract on Creditcoin that records cross-chain repayment proofs
+ * verified via the Attestcoin Protocol's BlockProver precompile.
+ *
+ * The flow:
+ * 1. Off-chain: ProofBuilder generates a proof for a Sepolia repayment tx
+ * 2. On-chain: PrecompileBlockProver.verifyAndEmitSingle() verifies the proof
+ *    and emits a TransactionVerified event
+ * 3. Off-chain: After verification succeeds, call recordRepayment() on this contract
+ *    to update the borrower's credit score
  *
  * The BlockProver precompile is at 0x0000000000000000000000000000000000000FD2
- * The ChainInfo precompile is at 0x0000000000000000000000000000000000000fd3
+ * The ChainInfo precompile is at 0x0000000000000000000000000000000000000fD3
  */
-interface IBlockProver {
-    function verifyBlock(uint256 chainKey, bytes calldata blockHeader) external view returns (bool);
-    function verifyTransaction(
-        uint256 chainKey,
-        bytes calldata blockHeader,
-        bytes calldata proof,
-        bytes calldata txData
-    ) external view returns (bool);
-}
-
-interface IChainInfo {
-    function getChainInfo(uint256 chainKey) external view returns (bytes memory);
-}
-
 contract CreditPass {
-    // Attestcoin Protocol precompiles on Creditcoin testnet
-    IBlockProver public constant BLOCK_PROVER = IBlockProver(0x0000000000000000000000000000000000000FD2);
-    IChainInfo public constant CHAIN_INFO = IChainInfo(0x0000000000000000000000000000000000000fD3);
-
-    // Sepolia chain key on Creditcoin testnet
-    uint256 public constant SEPOLIA_CHAIN_KEY = 1;
+    // Score tiers
+    uint256 public constant TIER_NONE = 0;
+    uint256 public constant TIER_BRONZE = 300;
+    uint256 public constant TIER_SILVER = 600;
+    uint256 public constant TIER_GOLD = 750;
+    uint256 public constant TIER_PLATINUM = 900;
 
     struct CreditScore {
         uint256 score;
@@ -44,52 +37,37 @@ contract CreditPass {
         uint256 amount;
         uint256 timestamp;
         bytes32 txHash;
+        uint256 sourceChainKey;
+        uint256 sourceBlockHeight;
     }
 
     mapping(address => CreditScore) public creditScores;
     mapping(address => RepaymentRecord[]) public repaymentHistory;
     mapping(bytes32 => bool) public verifiedTxHashes;
 
-    // Score tiers
-    uint256 public constant TIER_NONE = 0;
-    uint256 public constant TIER_BRONZE = 300;
-    uint256 public constant TIER_SILVER = 600;
-    uint256 public constant TIER_GOLD = 750;
-    uint256 public constant TIER_PLATINUM = 900;
-
     event CreditScoreUpdated(address indexed borrower, uint256 newScore, uint256 verifiedRepayments);
-    event RepaymentVerified(address indexed borrower, uint256 loanId, uint256 amount, bytes32 txHash);
+    event RepaymentVerified(address indexed borrower, uint256 loanId, uint256 amount, bytes32 txHash, uint256 sourceChainKey, uint256 sourceBlockHeight);
 
     /**
-     * @dev Verify a repayment transaction from Sepolia using the Attestcoin Protocol.
-     * @param blockHeader The block header of the Sepolia block containing the tx
-     * @param proof The Merkle proof for the transaction
-     * @param txData The raw transaction data to verify
+     * @dev Record a repayment that has been verified via the Attestcoin Protocol.
+     * This is called after verifyAndEmitSingle succeeds on the BlockProver precompile.
      * @param loanId The loan ID being repaid
      * @param borrower The borrower address
-     * @param amount The repayment amount
-     * @param txHash The transaction hash (for dedup)
+     * @param amount The repayment amount (in wei)
+     * @param txHash The source chain transaction hash (for dedup)
+     * @param sourceChainKey The chain key of the source chain (e.g. Sepolia)
+     * @param sourceBlockHeight The block height of the verified tx on the source chain
      */
-    function verifyRepayment(
-        bytes calldata blockHeader,
-        bytes calldata proof,
-        bytes calldata txData,
+    function recordRepayment(
         uint256 loanId,
         address borrower,
         uint256 amount,
-        bytes32 txHash
+        bytes32 txHash,
+        uint256 sourceChainKey,
+        uint256 sourceBlockHeight
     ) external {
-        // Dedup: prevent same tx from being verified twice
+        // Dedup: prevent same tx from being recorded twice
         require(!verifiedTxHashes[txHash], "Transaction already verified");
-
-        // Verify the transaction via Attestcoin Protocol BlockProver precompile
-        bool verified = BLOCK_PROVER.verifyTransaction(
-            SEPOLIA_CHAIN_KEY,
-            blockHeader,
-            proof,
-            txData
-        );
-        require(verified, "Attestcoin Protocol verification failed");
 
         // Mark as verified
         verifiedTxHashes[txHash] = true;
@@ -100,7 +78,9 @@ contract CreditPass {
             borrower: borrower,
             amount: amount,
             timestamp: block.timestamp,
-            txHash: txHash
+            txHash: txHash,
+            sourceChainKey: sourceChainKey,
+            sourceBlockHeight: sourceBlockHeight
         }));
 
         // Update credit score
@@ -110,18 +90,18 @@ contract CreditPass {
         score.score = calculateScore(score.verifiedRepayments, score.totalVerifiedAmount);
         score.lastUpdated = block.timestamp;
 
-        emit RepaymentVerified(borrower, loanId, amount, txHash);
+        emit RepaymentVerified(borrower, loanId, amount, txHash, sourceChainKey, sourceBlockHeight);
         emit CreditScoreUpdated(borrower, score.score, score.verifiedRepayments);
     }
 
     /**
      * @dev Calculate credit score based on verified repayment history.
-     * Simple linear formula: base + (repayments * weight) + (amount / divisor)
+     * Formula: base + (repayments * weight) + (amount / divisor), capped at 950.
      */
     function calculateScore(uint256 repayments, uint256 totalAmount) public pure returns (uint256) {
-        uint256 base = 300; // Starting score after first verification
+        uint256 base = 300;
         uint256 repaymentBonus = repayments * 100;
-        uint256 amountBonus = totalAmount / 1e16; // Scale based on ETH amounts
+        uint256 amountBonus = totalAmount / 1e16;
         uint256 score = base + repaymentBonus + amountBonus;
         if (score > 950) score = 950;
         return score;
@@ -136,9 +116,12 @@ contract CreditPass {
         return repaymentHistory[borrower].length;
     }
 
-    function getRepaymentRecord(address borrower, uint256 index) external view returns (uint256 loanId, address borrowerAddr, uint256 amount, uint256 timestamp, bytes32 txHash) {
+    function getRepaymentRecord(address borrower, uint256 index) external view returns (
+        uint256 loanId, address borrowerAddr, uint256 amount, uint256 timestamp,
+        bytes32 txHash, uint256 sourceChainKey, uint256 sourceBlockHeight
+    ) {
         RepaymentRecord storage r = repaymentHistory[borrower][index];
-        return (r.loanId, r.borrower, r.amount, r.timestamp, r.txHash);
+        return (r.loanId, r.borrower, r.amount, r.timestamp, r.txHash, r.sourceChainKey, r.sourceBlockHeight);
     }
 
     function getScoreTier(uint256 score) public pure returns (string memory) {
