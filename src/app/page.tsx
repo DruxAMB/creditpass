@@ -10,6 +10,7 @@ import {
   Clock,
   AlertCircle,
   LogOut,
+  ArrowLeft,
 } from "lucide-react";
 import { ethers } from "ethers";
 import { CREDIT_LENDER_ABI } from "@/lib/abis";
@@ -521,6 +522,29 @@ export default function Home() {
       {/* Dashboard — only rendered after hero exit */}
       {!showHero && (
       <main ref={dashboardRef} className="mx-auto max-w-[1200px] px-5 py-20 dashboard-enter">
+        {/* Back to hero */}
+        <button
+          onClick={() => {
+            setShowHero(true);
+            setHeroExiting(false);
+            setDemoMode(false);
+            setCreditScore(0);
+            setVerifiedRepayments(0);
+            setTotalVerifiedAmount("0");
+            setRepaymentHistory([]);
+            setLoans([]);
+            setHasImported(false);
+            setTxHashInput("");
+            setVerifyError(null);
+            setLoanError(null);
+            setLoadError(null);
+          }}
+          className="mb-10 inline-flex items-center gap-2 font-ui text-sm uppercase tracking-[0.1em] text-paper-white/60 hover:text-eclipse-green transition-colors"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back to Home
+        </button>
+
         {/* Error states */}
         {walletError && (
           <div className="mb-6 flex items-center gap-3 p-5 pill border border-ink-black bg-paper-white animate-in">
@@ -748,7 +772,7 @@ export default function Home() {
               onClick={() => setShowHowItWorks(!showHowItWorks)}
               className="eyebrow text-paper-white underline decoration-paper-white/40 underline-offset-4 hover:decoration-eclipse-green hover:text-eclipse-green transition-colors cursor-pointer"
             >
-              How It Works {showHowItWorks ? "▲" : "▼"}
+              How It Works
             </button>
           </div>
           {showHowItWorks && (
