@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import {
   ShieldCheck,
   TrendingUp,
@@ -50,6 +50,39 @@ export default function Home() {
   const [repaymentHistory, setRepaymentHistory] = useState<RepaymentRecord[]>([]);
   const [loans, setLoans] = useState<LoanRecord[]>([]);
   const [hasImported, setHasImported] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Load existing credit score on mount
+  useEffect(() => {
+    async function loadScore() {
+      try {
+        const res = await fetch("/api/credit-score");
+        if (res.ok) {
+          const data = await res.json();
+          if (data.score > 0) {
+            setCreditScore(data.score);
+            setVerifiedRepayments(data.verifiedRepayments);
+            setTotalVerifiedAmount(data.totalVerifiedAmount);
+            setHasImported(true);
+            setRepaymentHistory(
+              data.repayments.map((r: { loanId: number; amount: string; txHash: string; timestamp: string; sourceChainKey: number }) => ({
+                loanId: r.loanId,
+                amount: `${r.amount} ETH`,
+                txHash: `${r.txHash.slice(0, 8)}...${r.txHash.slice(-6)}`,
+                timestamp: new Date(r.timestamp).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
+                chain: r.sourceChainKey === 1 ? "Sepolia" : "Unknown",
+              }))
+            );
+          }
+        }
+      } catch (err) {
+        console.error("Failed to load credit score:", err);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    loadScore();
+  }, []);
 
   const scoreTier = getScoreTier(creditScore);
   const loanTerms = getLoanTerms(creditScore);
@@ -65,6 +98,9 @@ export default function Home() {
       { label: "Updating credit score on-chain", status: "pending" },
     ]);
 
+    // The real Sepolia repayment tx hash from our deployment
+    const txHash = "0x65b79312a09ff011cd981d94cd6e39632efa20f909047a6bb4646f6e9a9875b7";
+
     await sleep(800);
     setVerificationSteps((prev) => [
       { label: "Fetching Sepolia transaction data", status: "done" },
@@ -75,69 +111,46 @@ export default function Home() {
       { label: "Updating credit score on-chain", status: "pending" },
     ]);
 
-    await sleep(1000);
-    setVerificationSteps((prev) => [
-      { label: "Fetching Sepolia transaction data", status: "done" },
-      { label: "Generating cross-chain proof via Attestcoin Protocol", status: "done" },
-      { label: "Submitting proof to BlockProver precompile", status: "active" },
-      { label: "Verifying block header on Creditcoin", status: "pending" },
-      { label: "Decoding verified transaction data", status: "pending" },
-      { label: "Updating credit score on-chain", status: "pending" },
-    ]);
+    try {
+      const response = await fetch("/api/verify-repayment", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ txHash }),
+      });
 
-    await sleep(1200);
-    setVerificationSteps((prev) => [
-      { label: "Fetching Sepolia transaction data", status: "done" },
-      { label: "Generating cross-chain proof via Attestcoin Protocol", status: "done" },
-      { label: "Submitting proof to BlockProver precompile", status: "done" },
-      { label: "Verifying block header on Creditcoin", status: "active" },
-      { label: "Decoding verified transaction data", status: "pending" },
-      { label: "Updating credit score on-chain", status: "pending" },
-    ]);
+      const data = await response.json();
 
-    await sleep(1000);
-    setVerificationSteps((prev) => [
-      { label: "Fetching Sepolia transaction data", status: "done" },
-      { label: "Generating cross-chain proof via Attestcoin Protocol", status: "done" },
-      { label: "Submitting proof to BlockProver precompile", status: "done" },
-      { label: "Verifying block header on Creditcoin", status: "done" },
-      { label: "Decoding verified transaction data", status: "active" },
-      { label: "Updating credit score on-chain", status: "pending" },
-    ]);
+      if (!response.ok) {
+        throw new Error(data.error || "Verification failed");
+      }
 
-    await sleep(800);
-    setVerificationSteps((prev) => [
-      { label: "Fetching Sepolia transaction data", status: "done" },
-      { label: "Generating cross-chain proof via Attestcoin Protocol", status: "done" },
-      { label: "Submitting proof to BlockProver precompile", status: "done" },
-      { label: "Verifying block header on Creditcoin", status: "done" },
-      { label: "Decoding verified transaction data", status: "done" },
-      { label: "Updating credit score on-chain", status: "active" },
-    ]);
+      // Update all steps to done
+      setVerificationSteps([
+        { label: "Fetching Sepolia transaction data", status: "done" },
+        { label: "Generating cross-chain proof via Attestcoin Protocol", status: "done" },
+        { label: "Submitting proof to BlockProver precompile", status: "done" },
+        { label: "Verifying block header on Creditcoin", status: "done" },
+        { label: "Decoding verified transaction data", status: "done" },
+        { label: "Updating credit score on-chain", status: "done" },
+      ]);
 
-    await sleep(600);
-    setVerificationSteps((prev) => [
-      { label: "Fetching Sepolia transaction data", status: "done" },
-      { label: "Generating cross-chain proof via Attestcoin Protocol", status: "done" },
-      { label: "Submitting proof to BlockProver precompile", status: "done" },
-      { label: "Verifying block header on Creditcoin", status: "done" },
-      { label: "Decoding verified transaction data", status: "done" },
-      { label: "Updating credit score on-chain", status: "done" },
-    ]);
-
-    setCreditScore(750);
-    setVerifiedRepayments(1);
-    setTotalVerifiedAmount("5.0");
-    setHasImported(true);
-    setRepaymentHistory([
-      {
-        loanId: 0,
-        amount: "5.0 ETH",
-        txHash: "0x4a2b...8f3c",
-        timestamp: "Aug 17, 2026",
-        chain: "Sepolia",
-      },
-    ]);
+      setCreditScore(data.score);
+      setVerifiedRepayments(data.verifiedRepayments);
+      setTotalVerifiedAmount(data.totalVerifiedAmount);
+      setHasImported(true);
+      setRepaymentHistory([
+        {
+          loanId: 0,
+          amount: `${data.totalVerifiedAmount} ETH`,
+          txHash: `${txHash.slice(0, 8)}...${txHash.slice(-6)}`,
+          timestamp: "Aug 17, 2026",
+          chain: "Sepolia",
+        },
+      ]);
+    } catch (err) {
+      console.error("Verification failed:", err);
+      setVerificationSteps([]);
+    }
 
     await sleep(500);
     setIsVerifying(false);
