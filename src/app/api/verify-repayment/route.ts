@@ -6,7 +6,7 @@ import { friendlyError } from "@/lib/errors";
 
 const SEPOLIA_CHAIN_KEY = 1;
 const PROOF_BUILDER_URL = "https://prover.cc3-testnet.creditcoin.network";
-const CREDITPASS_ADDRESS = "0xb3FCCC7E689c80d49174E1F057A17C688c7aF196";
+const CREDITPASS_ADDRESS = "0x3e442bF5A50ddC63aE0fc0c683190CaCa5F00283";
 const CREDITCOIN_RPC = "https://rpc.cc3-testnet.creditcoin.network";
 const SEPOLIA_RPC = `https://sepolia.infura.io/v3/${process.env.INFURA_API_KEY || "0a01199d41094205a22eb92865d61bf5"}`;
 
