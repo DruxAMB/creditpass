@@ -16,6 +16,10 @@ pragma solidity ^0.8.24;
  * The BlockProver precompile is at 0x0000000000000000000000000000000000000FD2
  * The ChainInfo precompile is at 0x0000000000000000000000000000000000000fD3
  */
+interface ICreditPassNFT {
+    function mintOrUpdate(address borrower, uint256 score, uint256 verifiedRepayments, uint256 totalVerifiedAmount, string calldata tier) external;
+}
+
 contract CreditPass {
     // Score tiers
     uint256 public constant TIER_NONE = 0;
@@ -23,6 +27,9 @@ contract CreditPass {
     uint256 public constant TIER_SILVER = 600;
     uint256 public constant TIER_GOLD = 750;
     uint256 public constant TIER_PLATINUM = 900;
+
+    ICreditPassNFT public nftContract;
+    address public owner;
 
     struct CreditScore {
         uint256 score;
@@ -92,6 +99,17 @@ contract CreditPass {
 
         emit RepaymentVerified(borrower, loanId, amount, txHash, sourceChainKey, sourceBlockHeight);
         emit CreditScoreUpdated(borrower, score.score, score.verifiedRepayments);
+
+        // Mint or update soulbound NFT passport
+        if (address(nftContract) != address(0)) {
+            nftContract.mintOrUpdate(
+                borrower,
+                score.score,
+                score.verifiedRepayments,
+                score.totalVerifiedAmount,
+                getScoreTier(score.score)
+            );
+        }
     }
 
     /**
@@ -130,5 +148,10 @@ contract CreditPass {
         if (score >= TIER_SILVER) return "Silver";
         if (score >= TIER_BRONZE) return "Bronze";
         return "No History";
+    }
+
+    function setNFTContract(address _nftContract) external {
+        require(msg.sender == owner, "Only owner");
+        nftContract = ICreditPassNFT(_nftContract);
     }
 }

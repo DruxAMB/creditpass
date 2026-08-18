@@ -860,6 +860,18 @@ export default function Home() {
                     <div className="eyebrow text-muted-foreground mt-1">ETH Verified</div>
                   </div>
                 </div>
+                {creditScore > 0 && (
+                  <div className="mt-4 w-full p-3 pill border border-ink-black bg-ink-black text-paper-white flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-eclipse-green shrink-0">
+                      <Coins className="h-5 w-5 text-ink-black" />
+                    </div>
+                    <div className="flex-1 text-left">
+                      <div className="font-ui text-xs font-bold uppercase tracking-[0.1em] text-eclipse-green">Soulbound NFT</div>
+                      <div className="font-label text-xs text-paper-white/60">Credit Passport #{walletAddress ? walletAddress.slice(2, 8) : "DEMO"} · {scoreTier.label}</div>
+                    </div>
+                    <div className="font-label text-xs text-paper-white/40 uppercase">Non-Transferable</div>
+                  </div>
+                )}
               </div>
             )}
           </div>
