@@ -624,9 +624,15 @@ export default function Home() {
       {/* Hero — full-bleed black band with hairline serif headline */}
       {showHero && (
         <section ref={heroRef} className={`relative bg-ink-black text-paper-white flex flex-col min-h-[calc(100vh-95px)] ${heroExiting ? "hero-exit" : "hero-enter"}`}>
-          {/* Line-art background */}
-          <div className="absolute inset-0 z-0 opacity-60" style={{ backgroundImage: "url(/hero-bg.svg)", backgroundSize: "cover", backgroundPosition: "center" }} aria-hidden="true" />
-          <div className="absolute inset-0 z-0 bg-gradient-to-b from-ink-black/40 via-ink-black/60 to-ink-black" aria-hidden="true" />
+          {/* Background image with overlay */}
+          <div className="absolute inset-0 z-0">
+            <img
+              src="/hero-bg.png"
+              alt=""
+              className="h-full w-full object-cover opacity-40"
+            />
+            <div className="absolute inset-0 bg-gradient-to-b from-ink-black/60 via-ink-black/40 to-ink-black" />
+          </div>
 
           {/* Floating How It Works cards — desktop only */}
           <div className="hidden lg:block absolute inset-0 z-20 pointer-events-none">
