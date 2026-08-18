@@ -3,7 +3,6 @@
 import React, { useState, useCallback, useEffect, useRef } from "react";
 import gsap from "gsap";
 import { Draggable } from "gsap/Draggable";
-import { InertiaPlugin } from "gsap/InertiaPlugin";
 import { useGSAP } from "@gsap/react";
 import {
   Coins,
@@ -76,7 +75,7 @@ export default function Home() {
   const card2Ref = useRef<HTMLDivElement>(null);
   const card3Ref = useRef<HTMLDivElement>(null);
 
-  gsap.registerPlugin(Draggable, InertiaPlugin, useGSAP);
+  gsap.registerPlugin(Draggable, useGSAP);
 
   // GSAP wiggle + draggable for hero floating cards
   useGSAP(() => {
@@ -135,7 +134,6 @@ export default function Home() {
       bounds: heroRef.current,
       edgeResistance: 0.65,
       type: "x,y",
-      inertia: true,
       onPress: function () {
         gsap.to(this.target, {
           scale: 1.1,
