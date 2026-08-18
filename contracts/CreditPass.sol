@@ -55,6 +55,10 @@ contract CreditPass {
     event CreditScoreUpdated(address indexed borrower, uint256 newScore, uint256 verifiedRepayments);
     event RepaymentVerified(address indexed borrower, uint256 loanId, uint256 amount, bytes32 txHash, uint256 sourceChainKey, uint256 sourceBlockHeight);
 
+    constructor() {
+        owner = msg.sender;
+    }
+
     /**
      * @dev Record a repayment that has been verified via the Attestcoin Protocol.
      * This is called after verifyAndEmitSingle succeeds on the BlockProver precompile.

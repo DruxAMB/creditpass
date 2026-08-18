@@ -39,8 +39,9 @@ Ethereum Sepolia                    Creditcoin Testnet
 | Contract | Chain | Address | Purpose |
 |----------|-------|---------|---------|
 | `LoanSource` | Sepolia | `0xb3FCCC7E689c80d49174E1F057A17C688c7aF196` | Mock lending contract with loan creation + repayment |
-| `CreditPass` | Creditcoin | `0xb3FCCC7E689c80d49174E1F057A17C688c7aF196` | Records verified repayments + calculates credit scores |
-| `CreditLender` | Creditcoin | `0x1A69795A4C0d957e47c240BAa8DbC1f5d91290F2` | Score-based lending with tiered interest rates |
+| `CreditPass` | Creditcoin | `0x3e442bF5A50ddC63aE0fc0c683190CaCa5F00283` | Records verified repayments + calculates credit scores |
+| `CreditLender` | Creditcoin | `0x9620FeB1Da3F8c7FB8a71792ffacFe94A9C6976c` | Score-based lending with tiered interest rates |
+| `CreditPassNFT` | Creditcoin | `0x1ff805F471b9e59784BA349F7660099C0dcBDB5a` | Soulbound NFT credit passport (non-transferable) |
 
 ## Tech Stack
 
