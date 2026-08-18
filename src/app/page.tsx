@@ -623,7 +623,7 @@ export default function Home() {
 
       {/* Hero — full-bleed black band with hairline serif headline */}
       {showHero && (
-        <section ref={heroRef} className={`relative bg-ink-black text-paper-white flex flex-col min-h-[calc(100vh-95px)] ${heroExiting ? "hero-exit" : "hero-enter"}`}>
+        <section ref={heroRef} className={`relative bg-ink-black text-paper-white flex flex-col min-h-[calc(100vh-70px)] ${heroExiting ? "hero-exit" : "hero-enter"}`}>
           {/* Floating How It Works cards — desktop only */}
           <div className="hidden lg:block absolute inset-0 z-20 pointer-events-none">
             <div
@@ -659,15 +659,15 @@ export default function Home() {
           </div>
 
           <div className="flex-1 flex flex-col items-center justify-center text-center px-5 py-12 relative z-10">
-            <div className="w-full max-w-xl flex justify-end mb-4">
+            <div className="w-full max-w-xs flex justify-between mb-4">
               <a
                 href="/whitepaper"
                 className="font-label text-xs uppercase tracking-[0.2em] text-paper-white/40 hover:text-eclipse-green transition-colors"
               >
                 Read whitepaper →
               </a>
+              <span className="eyebrow text-paper-white mb-6">CreditPass is</span>
             </div>
-            <span className="eyebrow text-paper-white mb-6">CreditPass is</span>
             <h1 className="font-heading font-light leading-[0.85] tracking-[-0.04em] text-5xl md:text-7xl lg:text-8xl">
               Your Ethereum Repayments
             </h1>
