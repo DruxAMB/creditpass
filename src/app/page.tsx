@@ -1,6 +1,10 @@
 "use client";
 
 import React, { useState, useCallback, useEffect, useRef } from "react";
+import gsap from "gsap";
+import { Draggable } from "gsap/Draggable";
+import { InertiaPlugin } from "gsap/InertiaPlugin";
+import { useGSAP } from "@gsap/react";
 import {
   Coins,
   CheckCircle2,
@@ -12,7 +16,6 @@ import {
   LogOut,
   ArrowLeft,
 } from "lucide-react";
-import { motion } from "motion/react";
 import { ethers } from "ethers";
 import { CREDIT_LENDER_ABI } from "@/lib/abis";
 import { friendlyError } from "@/lib/errors";
@@ -69,6 +72,88 @@ export default function Home() {
   const liveRegionRef = useRef<HTMLDivElement>(null);
   const dashboardRef = useRef<HTMLDivElement>(null);
   const heroRef = useRef<HTMLElement>(null);
+  const card1Ref = useRef<HTMLDivElement>(null);
+  const card2Ref = useRef<HTMLDivElement>(null);
+  const card3Ref = useRef<HTMLDivElement>(null);
+
+  gsap.registerPlugin(Draggable, InertiaPlugin, useGSAP);
+
+  // GSAP wiggle + draggable for hero floating cards
+  useGSAP(() => {
+    if (!heroRef.current) return;
+
+    const cards = [
+      { el: card1Ref.current, rotate: -2, delay: 0.3 },
+      { el: card2Ref.current, rotate: 1.5, delay: 0.5 },
+      { el: card3Ref.current, rotate: -1, delay: 0.7 },
+    ];
+
+    cards.forEach(({ el, rotate, delay }) => {
+      if (!el) return;
+
+      // Entrance: fade in + slide up
+      gsap.fromTo(el,
+        { opacity: 0, y: 20, rotation: 0 },
+        { opacity: 0.8, y: 0, rotation: rotate, duration: 0.6, delay, ease: "power2.out" }
+      );
+
+      // Wiggle loop
+      gsap.to(el, {
+        rotation: `+=${rotate > 0 ? 3 : -3}`,
+        duration: 2.5,
+        repeat: -1,
+        yoyo: true,
+        ease: "sine.inOut",
+        delay: delay + 0.6,
+      });
+
+      // Hover: straighten + scale + glow
+      el.addEventListener("mouseenter", () => {
+        gsap.to(el, {
+          rotation: 0,
+          scale: 1.05,
+          opacity: 1,
+          duration: 0.3,
+          ease: "power2.out",
+          overwrite: "auto",
+        });
+      });
+      el.addEventListener("mouseleave", () => {
+        gsap.to(el, {
+          rotation: rotate,
+          scale: 1,
+          opacity: 0.8,
+          duration: 0.4,
+          ease: "power2.out",
+          overwrite: "auto",
+        });
+      });
+    });
+
+    // Make cards draggable within hero bounds
+    Draggable.create([card1Ref.current, card2Ref.current, card3Ref.current], {
+      bounds: heroRef.current,
+      edgeResistance: 0.65,
+      type: "x,y",
+      inertia: true,
+      onPress: function () {
+        gsap.to(this.target, {
+          scale: 1.1,
+          zIndex: 50,
+          duration: 0.2,
+          overwrite: "auto",
+        });
+      },
+      onRelease: function () {
+        gsap.to(this.target, {
+          scale: 1,
+          zIndex: 1,
+          duration: 0.3,
+          overwrite: "auto",
+        });
+      },
+    });
+  }, { scope: heroRef, dependencies: [showHero] });
 
   // Wagmi hooks for wallet state
   const { address: walletAddress, isConnecting: isConnectingWallet } = useAccount();
@@ -539,71 +624,38 @@ export default function Home() {
       {/* Hero — full-bleed black band with hairline serif headline */}
       {showHero && (
         <section ref={heroRef} className={`relative bg-ink-black text-paper-white flex flex-col min-h-[calc(100vh-70px)] ${heroExiting ? "hero-exit" : "hero-enter"}`}>
-          {/* Floating How It Works cards — desktop only, draggable + wiggling */}
+          {/* Floating How It Works cards — desktop only */}
           <div className="hidden lg:block">
-            <motion.div
-              drag
-              dragConstraints={heroRef}
-              dragMomentum={false}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 0.85, y: 0, rotate: [-2, 1, -2] }}
-              transition={{
-                opacity: { duration: 0.6, delay: 0.3 },
-                y: { duration: 0.6, delay: 0.3 },
-                rotate: { repeat: Infinity, duration: 4, ease: "easeInOut" },
-              }}
-              whileHover={{ rotate: 0, scale: 1.03, opacity: 1 }}
-              whileDrag={{ scale: 1.1, zIndex: 50, cursor: "grabbing" }}
-              className="absolute top-20 left-62 max-w-[220px] p-5 pill border border-ink-black bg-paper-white cursor-grab"
+            <div
+              ref={card1Ref}
+              className="absolute top-20 left-62 max-w-[220px] p-5 pill border border-ink-black bg-paper-white opacity-80"
             >
               <div className="font-heading text-3xl font-light mb-2 text-ink-black">01</div>
               <h3 className="font-ui text-sm font-bold uppercase tracking-wide mb-1 text-ink-black">Repay on Ethereum</h3>
               <p className="font-ui text-xs text-muted-foreground">
                 Borrowers repay loans on Sepolia. Just a normal on-chain tx.
               </p>
-            </motion.div>
-            <motion.div
-              drag
-              dragConstraints={heroRef}
-              dragMomentum={false}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 0.9, y: 0, rotate: [1.5, -1, 1.5] }}
-              transition={{
-                opacity: { duration: 0.6, delay: 0.5 },
-                y: { duration: 0.6, delay: 0.5 },
-                rotate: { repeat: Infinity, duration: 5, ease: "easeInOut" },
-              }}
-              whileHover={{ rotate: 0, scale: 1.03, opacity: 1 }}
-              whileDrag={{ scale: 1.1, zIndex: 50, cursor: "grabbing" }}
-              className="absolute top-1/2 -translate-y-1/2 right-62 max-w-[220px] p-5 pill border border-ink-black bg-eclipse-green eclipse-glow cursor-grab"
+            </div>
+            <div
+              ref={card2Ref}
+              className="absolute top-1/2 -translate-y-1/2 right-62 max-w-[220px] p-5 pill border border-ink-black bg-eclipse-green eclipse-glow opacity-90"
             >
               <div className="font-heading text-3xl font-light mb-2 text-ink-black">02</div>
               <h3 className="font-ui text-sm font-bold uppercase tracking-wide mb-1 text-ink-black">Verify via Attestcoin</h3>
               <p className="font-ui text-xs text-ink-black">
                 Cryptographic proof generated and verified on Creditcoin via BlockProver precompile.
               </p>
-            </motion.div>
-            <motion.div
-              drag
-              dragConstraints={heroRef}
-              dragMomentum={false}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 0.85, y: 0, rotate: [-1, 1.5, -1] }}
-              transition={{
-                opacity: { duration: 0.6, delay: 0.7 },
-                y: { duration: 0.6, delay: 0.7 },
-                rotate: { repeat: Infinity, duration: 4.5, ease: "easeInOut" },
-              }}
-              whileHover={{ rotate: 0, scale: 1.03, opacity: 1 }}
-              whileDrag={{ scale: 1.1, zIndex: 50, cursor: "grabbing" }}
-              className="absolute bottom-40 left-90 max-w-[220px] p-5 pill border border-ink-black bg-paper-white cursor-grab"
+            </div>
+            <div
+              ref={card3Ref}
+              className="absolute bottom-40 left-90 max-w-[220px] p-5 pill border border-ink-black bg-paper-white opacity-80"
             >
               <div className="font-heading text-3xl font-light mb-2 text-ink-black">03</div>
               <h3 className="font-ui text-sm font-bold uppercase tracking-wide mb-1 text-ink-black">Borrow Better</h3>
               <p className="font-ui text-xs text-muted-foreground">
                 Verified repayments become a credit score, unlocking lower rates and higher limits.
               </p>
-            </motion.div>
+            </div>
           </div>
 
           <div className="flex-1 flex flex-col items-center justify-center text-center px-5 py-12 relative z-10">
