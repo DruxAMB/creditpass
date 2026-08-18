@@ -659,6 +659,14 @@ export default function Home() {
           </div>
 
           <div className="flex-1 flex flex-col items-center justify-center text-center px-5 py-12 relative z-10">
+            <div className="w-full max-w-xl flex justify-end mb-4">
+              <a
+                href="/whitepaper"
+                className="font-label text-xs uppercase tracking-[0.2em] text-paper-white/40 hover:text-eclipse-green transition-colors"
+              >
+                Read whitepaper →
+              </a>
+            </div>
             <span className="eyebrow text-paper-white mb-6">CreditPass is</span>
             <h1 className="font-heading font-light leading-[0.85] tracking-[-0.04em] text-5xl md:text-7xl lg:text-8xl">
               Your Ethereum Repayments
