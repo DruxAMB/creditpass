@@ -3,6 +3,7 @@
 import React, { useState, useCallback, useEffect, useRef } from "react";
 import gsap from "gsap";
 import { Draggable } from "gsap/Draggable";
+import { InertiaPlugin } from "gsap/InertiaPlugin";
 import { useGSAP } from "@gsap/react";
 import {
   Coins,
@@ -75,7 +76,7 @@ export default function Home() {
   const card2Ref = useRef<HTMLDivElement>(null);
   const card3Ref = useRef<HTMLDivElement>(null);
 
-  gsap.registerPlugin(Draggable, useGSAP);
+  gsap.registerPlugin(Draggable, InertiaPlugin, useGSAP);
 
   // GSAP wiggle + draggable for hero floating cards
   useGSAP(() => {
@@ -134,6 +135,7 @@ export default function Home() {
       bounds: heroRef.current,
       edgeResistance: 0.65,
       type: "x,y",
+      inertia: true,
       onPress: function () {
         gsap.to(this.target, {
           scale: 1.1,
@@ -623,10 +625,10 @@ export default function Home() {
       {showHero && (
         <section ref={heroRef} className={`relative bg-ink-black text-paper-white flex flex-col min-h-[calc(100vh-70px)] ${heroExiting ? "hero-exit" : "hero-enter"}`}>
           {/* Floating How It Works cards — desktop only */}
-          <div className="hidden lg:block">
+          <div className="hidden lg:block absolute inset-0 z-20 pointer-events-none">
             <div
               ref={card1Ref}
-              className="absolute top-20 left-62 max-w-[220px] p-5 pill border border-ink-black bg-paper-white opacity-80"
+              className="absolute top-20 left-62 max-w-[220px] p-5 pill border border-ink-black bg-paper-white opacity-80 pointer-events-auto cursor-grab active:cursor-grabbing"
             >
               <div className="font-heading text-3xl font-light mb-2 text-ink-black">01</div>
               <h3 className="font-ui text-sm font-bold uppercase tracking-wide mb-1 text-ink-black">Repay on Ethereum</h3>
@@ -636,7 +638,7 @@ export default function Home() {
             </div>
             <div
               ref={card2Ref}
-              className="absolute top-1/2 -translate-y-1/2 right-62 max-w-[220px] p-5 pill border border-ink-black bg-eclipse-green eclipse-glow opacity-90"
+              className="absolute top-1/2 -translate-y-1/2 right-62 max-w-[220px] p-5 pill border border-ink-black bg-eclipse-green eclipse-glow opacity-90 pointer-events-auto cursor-grab active:cursor-grabbing"
             >
               <div className="font-heading text-3xl font-light mb-2 text-ink-black">02</div>
               <h3 className="font-ui text-sm font-bold uppercase tracking-wide mb-1 text-ink-black">Verify via Attestcoin</h3>
@@ -646,7 +648,7 @@ export default function Home() {
             </div>
             <div
               ref={card3Ref}
-              className="absolute bottom-40 left-90 max-w-[220px] p-5 pill border border-ink-black bg-paper-white opacity-80"
+              className="absolute bottom-40 left-90 max-w-[220px] p-5 pill border border-ink-black bg-paper-white opacity-80 pointer-events-auto cursor-grab active:cursor-grabbing"
             >
               <div className="font-heading text-3xl font-light mb-2 text-ink-black">03</div>
               <h3 className="font-ui text-sm font-bold uppercase tracking-wide mb-1 text-ink-black">Borrow Better</h3>
