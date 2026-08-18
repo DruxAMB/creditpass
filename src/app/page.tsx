@@ -861,107 +861,15 @@ export default function Home() {
                   </div>
                 </div>
                 {creditScore > 0 && (
-                  <div className="mt-4 w-full">
-                    <div className="flex items-center justify-between mb-2 px-1">
-                      <div className="font-ui text-xs font-bold uppercase tracking-[0.1em] text-eclipse-green">Soulbound NFT Passport</div>
-                      <div className="font-label text-xs text-muted-foreground uppercase">Non-Transferable</div>
+                  <div className="mt-4 w-full p-3 pill border border-ink-black bg-ink-black text-paper-white flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-eclipse-green shrink-0">
+                      <Coins className="h-5 w-5 text-ink-black" />
                     </div>
-                    <div className="relative w-full aspect-[16/10] rounded-xl overflow-hidden border border-ink-black">
-                      <svg viewBox="0 0 320 200" className="w-full h-full block" xmlns="http://www.w3.org/2000/svg">
-                        <defs>
-                          <linearGradient id="nft-bg" x1="0%" y1="0%" x2="100%" y2="100%">
-                            <stop offset="0%" stopColor="#000000" />
-                            <stop offset="100%" stopColor="#0a0a0a" />
-                          </linearGradient>
-                          <linearGradient id="nft-tier" x1="0%" y1="0%" x2="100%" y2="0%">
-                            {scoreTier.label === "Platinum" && (
-                              <>
-                                <stop offset="0%" stopColor="#a1fea0" />
-                                <stop offset="100%" stopColor="#00ff88" />
-                              </>
-                            )}
-                            {scoreTier.label === "Gold" && (
-                              <>
-                                <stop offset="0%" stopColor="#ffd700" />
-                                <stop offset="100%" stopColor="#ffaa00" />
-                              </>
-                            )}
-                            {scoreTier.label === "Silver" && (
-                              <>
-                                <stop offset="0%" stopColor="#c0c0c0" />
-                                <stop offset="100%" stopColor="#888888" />
-                              </>
-                            )}
-                            {scoreTier.label === "Bronze" && (
-                              <>
-                                <stop offset="0%" stopColor="#cd7f32" />
-                                <stop offset="100%" stopColor="#8b4513" />
-                              </>
-                            )}
-                            {scoreTier.label === "No History" && (
-                              <>
-                                <stop offset="0%" stopColor="#333333" />
-                                <stop offset="100%" stopColor="#222222" />
-                              </>
-                            )}
-                          </linearGradient>
-                          <filter id="nft-glow">
-                            <feGaussianBlur stdDeviation="2" result="blur" />
-                            <feMerge>
-                              <feMergeNode in="blur" />
-                              <feMergeNode in="SourceGraphic" />
-                            </feMerge>
-                          </filter>
-                        </defs>
-
-                        {/* Background */}
-                        <rect width="320" height="200" fill="url(#nft-bg)" />
-
-                        {/* Tier accent bar */}
-                        <rect x="0" y="0" width="320" height="4" fill="url(#nft-tier)" />
-
-                        {/* Decorative grid lines */}
-                        <g stroke="#1a1a1a" strokeWidth="0.5" opacity="0.5">
-                          <line x1="0" y1="50" x2="320" y2="50" />
-                          <line x1="0" y1="100" x2="320" y2="100" />
-                          <line x1="0" y1="150" x2="320" y2="150" />
-                          <line x1="80" y1="0" x2="80" y2="200" />
-                          <line x1="160" y1="0" x2="160" y2="200" />
-                          <line x1="240" y1="0" x2="240" y2="200" />
-                        </g>
-
-                        {/* Circuit pattern */}
-                        <g stroke="#a1fea0" strokeWidth="0.3" opacity="0.15" fill="none">
-                          <path d="M 20 180 L 60 180 L 60 140 L 100 140" />
-                          <path d="M 260 20 L 220 20 L 220 60 L 180 60" />
-                          <circle cx="60" cy="180" r="2" />
-                          <circle cx="100" cy="140" r="2" />
-                          <circle cx="220" cy="20" r="2" />
-                          <circle cx="180" cy="60" r="2" />
-                        </g>
-
-                        {/* Header */}
-                        <text x="16" y="28" fill="#a1fea0" fontSize="9" fontWeight="bold" letterSpacing="2" fontFamily="monospace">CREDITPASS</text>
-                        <text x="304" y="28" fill="#666" fontSize="7" letterSpacing="1" fontFamily="monospace" textAnchor="end">SOULBOUND</text>
-
-                        {/* Score circle */}
-                        <circle cx="160" cy="100" r="42" fill="none" stroke="url(#nft-tier)" strokeWidth="2" filter="url(#nft-glow)" />
-                        <circle cx="160" cy="100" r="36" fill="#111" />
-                        <text x="160" y="98" fill="#fff" fontSize="28" fontWeight="300" textAnchor="middle" fontFamily="serif">{creditScore}</text>
-                        <text x="160" y="115" fill="#666" fontSize="7" textAnchor="middle" fontFamily="monospace">/ 950</text>
-
-                        {/* Tier label */}
-                        <rect x="110" y="155" width="100" height="20" rx="10" fill="url(#nft-tier)" opacity="0.9" />
-                        <text x="160" y="168" fill="#000" fontSize="9" fontWeight="bold" textAnchor="middle" letterSpacing="1" fontFamily="sans-serif">{scoreTier.label.toUpperCase()}</text>
-
-                        {/* Stats */}
-                        <text x="16" y="185" fill="#888" fontSize="6" letterSpacing="1" fontFamily="monospace">REPAYMENTS: {verifiedRepayments}</text>
-                        <text x="304" y="185" fill="#888" fontSize="6" letterSpacing="1" fontFamily="monospace" textAnchor="end">{totalVerifiedAmount} ETH</text>
-
-                        {/* Passport ID */}
-                        <text x="16" y="170" fill="#a1fea0" fontSize="6" letterSpacing="1" fontFamily="monospace" opacity="0.7">#{walletAddress ? walletAddress.slice(2, 8).toUpperCase() : "DEMO"}</text>
-                      </svg>
+                    <div className="flex-1 text-left">
+                      <div className="font-ui text-xs font-bold uppercase tracking-[0.1em] text-eclipse-green">Soulbound NFT</div>
+                      <div className="font-label text-xs text-paper-white/60">Credit Passport #{walletAddress ? walletAddress.slice(2, 8) : "DEMO"} · {scoreTier.label}</div>
                     </div>
+                    <div className="font-label text-xs text-paper-white/40 uppercase">Non <br /> Transferable</div>
                   </div>
                 )}
               </div>

@@ -9,7 +9,8 @@ CreditPass bridges Ethereum Sepolia and Creditcoin Testnet to create a trustless
 1. **Borrow & Repay on Ethereum** — A borrower repays a loan on Sepolia. The transaction is recorded on-chain.
 2. **Verify via Attestcoin Protocol** — The Attestcoin Protocol generates a cryptographic proof of the Sepolia transaction and verifies it on Creditcoin via the BlockProver precompile (`0x...0FD2`). No oracle required.
 3. **Build Credit Score** — Each verified repayment updates the borrower's credit score on the CreditPass smart contract on Creditcoin.
-4. **Borrow with Better Terms** — The CreditLender contract uses the credit score to determine interest rates and max borrow amounts. Higher score = lower rates.
+4. **Mint Soulbound NFT Passport** — A non-transferable NFT is minted on first verification and updated on each new repayment, serving as an on-chain credit passport with score, tier, and repayment history metadata.
+5. **Borrow with Better Terms** — The CreditLender contract uses the credit score to determine interest rates and max borrow amounts. Higher score = lower rates.
 
 ## Architecture
 
@@ -31,6 +32,12 @@ Ethereum Sepolia                    Creditcoin Testnet
                                                ┌──────────────▼──────────────┐
                                                │  CreditLender               │
                                                │  (score-based loan terms)   │
+                                               └──────────────┬──────────────┘
+                                                              │
+                                               ┌──────────────▼──────────────┐
+                                               │  CreditPassNFT              │
+                                               │  (soulbound credit passport)│
+                                               │  Non-transferable ERC721    │
                                                └─────────────────────────────┘
 ```
 
@@ -60,6 +67,7 @@ Ethereum Sepolia                    Creditcoin Testnet
 - Credit score recording on CreditPass contract
 - Credit score reading from Creditcoin in real-time
 - Score-based loan terms calculation (CreditLender contract)
+- Soulbound NFT minting and metadata updates on each verified repayment (CreditPassNFT contract)
 
 ### Simplified for Demo
 - The "Import Repayment History" button uses a pre-deployed Sepolia repayment tx
@@ -91,6 +99,7 @@ DEPLOYER_PRIVATE_KEY=0x... (derived from seed phrase)
 LOAN_SOURCE_ADDRESS=0x...
 CREDITPASS_ADDRESS=0x...
 CREDIT_LENDER_ADDRESS=0x...
+CREDITPASS_NFT_ADDRESS=0x...
 ```
 
 ### Compile Contracts
@@ -105,7 +114,8 @@ npm run compile
 # Deploy LoanSource to Sepolia (creates + repays a test loan)
 npm run deploy:sepolia
 
-# Deploy CreditPass + CreditLender to Creditcoin
+# Deploy CreditPass + CreditLender + CreditPassNFT to Creditcoin
+# (contracts are automatically linked: NFT ↔ CreditPass)
 npm run deploy:creditcoin
 ```
 
@@ -119,18 +129,19 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ## Demo Flow
 
-1. Open the app — credit score loads from on-chain data (currently 502 / Bronze with 2 verified repayments)
-2. Click "Import More" — triggers Attestcoin Protocol verification of a new Sepolia repayment
-3. Watch the 6-step verification process in real-time:
+1. Open the app — credit score loads from on-chain data (currently 401 / Bronze with 1 verified repayment)
+2. The soulbound NFT badge appears in the credit score card (Credit Passport #... · Bronze · Non-Transferable)
+3. Click "Import More" — triggers Attestcoin Protocol verification of a new Sepolia repayment
+4. Watch the 6-step verification process in real-time:
    - Fetching Sepolia transaction data
    - Generating cross-chain proof via Attestcoin Protocol
    - Submitting proof to BlockProver precompile
    - Verifying block header on Creditcoin
    - Decoding verified transaction data
-   - Updating credit score on-chain
-4. Credit score updates in real-time as new repayments are verified
-5. Loan terms improve with higher scores (20% → 15% → 12% → 8% → 5% APR)
-6. Click "Take Loan" to borrow against your credit score
+   - Updating credit score on-chain (NFT metadata updates automatically)
+5. Credit score updates in real-time as new repayments are verified
+6. Loan terms improve with higher scores (20% → 15% → 12% → 8% → 5% APR)
+7. Click "Take Loan" to borrow against your credit score
 
 ## Key Innovation
 

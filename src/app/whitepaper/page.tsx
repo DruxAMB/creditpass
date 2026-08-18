@@ -25,7 +25,7 @@ export default function WhitepaperPage() {
       <main className="mx-auto max-w-[800px] px-5 py-16">
         {/* Title */}
         <div className="mb-16">
-          <div className="eyebrow text-muted-foreground mb-4">Whitepaper · v1.0</div>
+          <div className="eyebrow text-muted-foreground mb-4">Whitepaper · v1.1</div>
           <h1 className="font-heading text-5xl font-light leading-[0.9] tracking-[-0.03em]">
             CreditPass
           </h1>
@@ -93,7 +93,8 @@ export default function WhitepaperPage() {
               <li>3. Calls ChainInfo precompile (<code className="font-label">0x...0fd3</code>) for chain validation</li>
               <li>4. Decodes the verified transaction data (borrower address, repayment amount)</li>
               <li>5. Updates the borrower's credit score (<code className="font-label">mapping: address → uint256</code>)</li>
-              <li>6. Supports batch verification for importing multiple repayments at once</li>
+              <li>6. Mints or updates the soulbound NFT passport via <code className="font-label">CreditPassNFT.mintOrUpdate()</code></li>
+              <li>7. Supports batch verification for importing multiple repayments at once</li>
             </ol>
           </div>
 
@@ -103,6 +104,16 @@ export default function WhitepaperPage() {
               <code className="font-label">CreditLender.sol</code> — A lending contract that reads the
               borrower's credit score from CreditPass, determines interest rate (lower score = higher rate)
               and max borrow amount, accepts CTC collateral, and issues loans in testnet tokens.
+            </p>
+          </div>
+
+          <div className="mb-6 p-6 pill border border-ink-black bg-ink-black text-paper-white">
+            <div className="eyebrow text-eclipse-green mb-2">Soulbound NFT — Creditcoin Testnet</div>
+            <p className="font-ui text-sm leading-relaxed">
+              <code className="font-label text-eclipse-green">CreditPassNFT.sol</code> — A non-transferable
+              ERC721 that represents the borrower's credit passport. Minted on first verified repayment,
+              updated on each subsequent verification. All transfer functions revert (soulbound). On-chain
+              metadata includes score, tier, verified repayment count, and total verified amount as NFT traits.
             </p>
           </div>
 
@@ -168,9 +179,33 @@ export default function WhitepaperPage() {
           </div>
         </section>
 
-        {/* 6. Circular Flow */}
+        {/* 6. Soulbound NFT Passport */}
         <section className="mb-14">
-          <h3 className="font-heading text-3xl font-light mb-4">06 — The Circular Flow</h3>
+          <h3 className="font-heading text-3xl font-light mb-4">06 — Soulbound NFT Passport</h3>
+          <p className="font-ui text-base leading-relaxed mb-4">
+            Each verified borrower receives a <strong>soulbound NFT</strong> — a non-transferable ERC721
+            token that serves as their on-chain credit passport. The NFT is minted on the first verified
+            repayment and its metadata is updated automatically on each subsequent verification.
+          </p>
+          <p className="font-ui text-base leading-relaxed mb-4">
+            The NFT's on-chain metadata includes:
+          </p>
+          <ul className="font-ui text-base leading-relaxed space-y-1 ml-4 mb-4">
+            <li>• <strong>Score</strong> — current credit score (0–950)</li>
+            <li>• <strong>Tier</strong> — No History / Bronze / Silver / Gold / Platinum</li>
+            <li>• <strong>Verified Repayments</strong> — count of cross-chain verified repayments</li>
+            <li>• <strong>Total Verified Amount</strong> — cumulative verified repayment volume (in wei)</li>
+          </ul>
+          <p className="font-ui text-base leading-relaxed">
+            Because the NFT is soulbound, it cannot be transferred or sold — it is permanently bound to
+            the borrower's address. This prevents credit score fraud (buying someone else's reputation)
+            and creates a portable, tamper-proof on-chain identity that other protocols can integrate with.
+          </p>
+        </section>
+
+        {/* 7. Circular Flow */}
+        <section className="mb-14">
+          <h3 className="font-heading text-3xl font-light mb-4">07 — The Circular Flow</h3>
           <p className="font-ui text-base leading-relaxed">
             Repayments on Creditcoin can themselves be verified back on Ethereum — creating a circular
             credit-building loop. Each chain strengthens the borrower's position on the other. This
@@ -179,9 +214,9 @@ export default function WhitepaperPage() {
           </p>
         </section>
 
-        {/* 7. Why This Matters */}
+        {/* 8. Why This Matters */}
         <section className="mb-14">
-          <h3 className="font-heading text-3xl font-light mb-4">07 — Why This Matters</h3>
+          <h3 className="font-heading text-3xl font-light mb-4">08 — Why This Matters</h3>
           <p className="font-ui text-base leading-relaxed mb-4">
             DeFi lending today is collateral-locked — you can only borrow against what you put up.
             CreditPass introduces <strong>reputation-based lending</strong> to cross-chain DeFi:
