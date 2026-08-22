@@ -15,6 +15,7 @@ import {
   AlertCircle,
   LogOut,
   ArrowLeft,
+  Book,
 } from "lucide-react";
 import { ethers } from "ethers";
 import { CREDIT_LENDER_ABI } from "@/lib/abis";
@@ -659,14 +660,14 @@ export default function Home() {
           </div>
 
           <div className="flex-1 flex flex-col items-center justify-center text-center px-5 py-12 relative z-10">
-            <div className="w-full max-w-xs flex justify-between mb-4">
+            <div className="w-fit flex gap-2 justify-between mb-6">
               <a
                 href="/whitepaper"
-                className="font-label text-xs uppercase tracking-[0.2em] text-paper-white/40 hover:text-eclipse-green transition-colors"
+                className="font-label flex gap-1 text-xs pt-[2px] uppercase tracking-[0.2em] text-paper-white/40 hover:text-eclipse-green transition-colors"
               >
-                Read whitepaper →
+                Read whitepaper <Book size={14} />
               </a>
-              <span className="eyebrow text-paper-white mb-6">CreditPass is</span>
+              <span className="eyebrow text-paper-white">CreditPass is</span>
             </div>
             <h1 className="font-heading font-light leading-[0.85] tracking-[-0.04em] text-5xl md:text-7xl lg:text-8xl">
               Your Ethereum Repayments
