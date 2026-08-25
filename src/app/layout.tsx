@@ -22,13 +22,13 @@ const spaceMono = Space_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "CreditPass — Cross-Chain Credit Passport",
+  title: "CreditPass | Cross-Chain Credit Passport",
   description: "Your repayment history on Ethereum is your credit score on Creditcoin — verified cryptographically via the Attestcoin Protocol. No oracle, no intermediary.",
   openGraph: {
-    title: "CreditPass — Cross-Chain Credit Passport",
+    title: "CreditPass | Cross-Chain Credit Passport",
     description: "Your repayment history on Ethereum is your credit score on Creditcoin — verified cryptographically via the Attestcoin Protocol.",
     type: "website",
-    url: "https://creditpass-mauve.vercel.app",
+    url: "https://creditpass.druxamb.dev/",
   },
   twitter: {
     card: "summary_large_image",

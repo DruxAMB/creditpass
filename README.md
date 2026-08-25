@@ -1,4 +1,6 @@
-# CreditPass — Cross-Chain Credit Passport
+# CreditPass | Cross-Chain Credit Passport
+
+**Live app: [https://creditpass.druxamb.dev](https://creditpass.druxamb.dev)**
 
 Your repayment history on Ethereum is your credit score on Creditcoin — verified cryptographically via the Attestcoin Protocol. No oracle, no intermediary.
 
@@ -142,6 +144,14 @@ Open [http://localhost:3000](http://localhost:3000).
 5. Credit score updates in real-time as new repayments are verified
 6. Loan terms improve with higher scores (20% → 15% → 12% → 8% → 5% APR)
 7. Click "Take Loan" to borrow against your credit score
+
+### On-chain Loan Proof
+
+A real borrow transaction issued via the CreditLender contract on Creditcoin testnet:
+
+![Loan transaction on Creditcoin Blockscout](loan.png)
+
+[View transaction on Blockscout →](https://creditcoin-testnet.blockscout.com/tx/0xc14ca594562f7f1c58b966c18fc17b9036fa1a0bda2b72d5062e95c9f65e94fe)
 
 ## Key Innovation
 
