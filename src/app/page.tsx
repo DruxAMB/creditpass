@@ -16,6 +16,7 @@ import {
   LogOut,
   ArrowLeft,
   Book,
+  ExternalLink,
 } from "lucide-react";
 import { ethers } from "ethers";
 import { CREDIT_LENDER_ABI } from "@/lib/abis";
@@ -32,6 +33,7 @@ type RepaymentRecord = {
   loanId: number;
   amount: string;
   txHash: string;
+  txHashFull: string;
   timestamp: string;
   chain: string;
 };
@@ -42,6 +44,7 @@ type LoanRecord = {
   interestRate: string;
   collateral: string;
   status: "active" | "repaid";
+  txHash: string;
 };
 
 export default function Home() {
@@ -277,6 +280,7 @@ export default function Home() {
             loanId: r.loanId,
             amount: `${r.amount} ETH`,
             txHash: `${r.txHash.slice(0, 8)}...${r.txHash.slice(-6)}`,
+            txHashFull: r.txHash,
             timestamp: new Date(r.timestamp).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
             chain: r.sourceChainKey === 1 ? "Sepolia" : "Unknown",
           }))
@@ -460,6 +464,7 @@ export default function Home() {
           loanId: data.verifiedRepayments - 1,
           amount: `${data.totalVerifiedAmount} ETH`,
           txHash: `${txHash.slice(0, 8)}...${txHash.slice(-6)}`,
+          txHashFull: txHash,
           timestamp: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
           chain: "Sepolia",
         },
@@ -505,6 +510,7 @@ export default function Home() {
           interestRate: `${Number(loanData[2]) / 100}%`,
           collateral: `${ethers.formatEther(loanData[3])} tCTC`,
           status: "active",
+          txHash: receipt.hash,
         };
         setLoans((prev) => [...prev, newLoan]);
         setLoanSuccess(`Loan #${loanId} issued successfully at ${Number(loanData[2]) / 100}% APR on Creditcoin.`);
@@ -553,6 +559,7 @@ export default function Home() {
         interestRate: data.interestRate,
         collateral: `${data.collateral} tCTC`,
         status: "active",
+        txHash: data.txHash,
       };
       setLoans((prev) => [...prev, newLoan]);
       setLoanSuccess(`Loan #${data.loanId} issued successfully at ${data.interestRate} APR on Creditcoin.`);
@@ -1041,9 +1048,12 @@ export default function Home() {
             ) : (
               <div className="space-y-3">
                 {repaymentHistory.map((record, i) => (
-                  <div
+                  <a
                     key={i}
-                    className="flex flex-col gap-3 p-5 pill border border-ink-black bg-paper-white sm:flex-row sm:items-center sm:justify-between"
+                    href={`https://sepolia.etherscan.io/tx/${record.txHashFull}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex flex-col gap-3 p-5 pill border border-ink-black bg-paper-white sm:flex-row sm:items-center sm:justify-between hover:border-2 hover:border-eclipse-green transition-all cursor-pointer group"
                   >
                     <div className="flex items-center gap-3">
                       <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-eclipse-green">
@@ -1062,11 +1072,12 @@ export default function Home() {
                       <span className="font-ui text-xs uppercase tracking-[0.1em] px-3 py-1 pill border border-ink-black bg-eclipse-green">
                         Verified
                       </span>
-                      <span className="font-label text-xs text-muted-foreground">
+                      <span className="font-label text-xs text-muted-foreground group-hover:text-ink-black transition-colors">
                         {record.txHash}
                       </span>
+                      <ExternalLink className="h-4 w-4 text-muted-foreground group-hover:text-eclipse-green transition-colors" aria-hidden="true" />
                     </div>
-                  </div>
+                  </a>
                 ))}
               </div>
             )}
@@ -1084,9 +1095,12 @@ export default function Home() {
             ) : (
               <div className="space-y-3">
                 {loans.map((loan, i) => (
-                  <div
+                  <a
                     key={i}
-                    className="flex flex-col gap-3 p-5 pill border border-ink-black bg-paper-white sm:flex-row sm:items-center sm:justify-between"
+                    href={`https://creditcoin-testnet.blockscout.com/tx/${loan.txHash}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex flex-col gap-3 p-5 pill border border-ink-black bg-paper-white sm:flex-row sm:items-center sm:justify-between hover:border-2 hover:border-eclipse-green transition-all cursor-pointer group"
                   >
                     <div className="flex items-center gap-3">
                       <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-ink-black">
@@ -1101,10 +1115,13 @@ export default function Home() {
                         </div>
                       </div>
                     </div>
-                    <span className="font-ui text-xs uppercase tracking-[0.1em] px-3 py-1 pill border border-ink-black">
-                      {loan.status === "active" ? "Active" : "Repaid"}
-                    </span>
-                  </div>
+                    <div className="flex items-center gap-3">
+                      <span className="font-ui text-xs uppercase tracking-[0.1em] px-3 py-1 pill border border-ink-black">
+                        {loan.status === "active" ? "Active" : "Repaid"}
+                      </span>
+                      <ExternalLink className="h-4 w-4 text-muted-foreground group-hover:text-eclipse-green transition-colors" aria-hidden="true" />
+                    </div>
+                  </a>
                 ))}
               </div>
             )}
