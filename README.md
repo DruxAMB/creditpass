@@ -1,6 +1,7 @@
 # CreditPass | Cross-Chain Credit Passport
 
 **Live app: [https://creditpass.druxamb.dev](https://creditpass.druxamb.dev)**
+**Demo video: [https://youtu.be/g5VLhIK_9CU](https://youtu.be/g5VLhIK_9CU)**
 
 Your repayment history on Ethereum is your credit score on Creditcoin — verified cryptographically via the Attestcoin Protocol. No oracle, no intermediary.
 
