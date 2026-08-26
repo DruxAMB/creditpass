@@ -73,6 +73,7 @@ export default function Home() {
   const [loanSuccess, setLoanSuccess] = useState<string | null>(null);
   const [walletError, setWalletError] = useState<string | null>(null);
   const [hasWallet, setHasWallet] = useState(false);
+  const [showVideoModal, setShowVideoModal] = useState(false);
   const liveRegionRef = useRef<HTMLDivElement>(null);
   const dashboardRef = useRef<HTMLDivElement>(null);
   const heroRef = useRef<HTMLElement>(null);
@@ -704,14 +705,12 @@ export default function Home() {
               No oracle, no intermediary — just math.
             </p>
             <div className="mt-10 flex flex-col gap-3 sm:flex-row">
-              <a
-                href="https://youtu.be/g5VLhIK_9CU"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="font-ui text-base uppercase tracking-[0.1em] px-6 py-2.5 pill bg-eclipse-green text-ink-black border border-ink-black hover:scale-105 transition-transform text-center"
+              <button
+                onClick={() => setShowVideoModal(true)}
+                className="font-ui text-base uppercase tracking-[0.1em] px-6 py-2.5 pill bg-eclipse-green text-ink-black border border-ink-black hover:scale-105 transition-transform"
               >
                 Demo Video
-              </a>
+              </button>
               <button
                 onClick={handleConnectAndBorrow}
                 disabled={isConnectingWallet}
@@ -1187,6 +1186,35 @@ export default function Home() {
           </div>
         </div>
       </main>
+      )}
+
+      {/* Demo video modal */}
+      {showVideoModal && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 animate-in"
+          onClick={() => setShowVideoModal(false)}
+        >
+          <div
+            className="relative w-full max-w-3xl mx-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setShowVideoModal(false)}
+              className="absolute -top-10 right-0 font-ui text-sm uppercase tracking-[0.1em] text-paper-white/60 hover:text-eclipse-green transition-colors"
+            >
+              Close ✕
+            </button>
+            <div className="relative aspect-video pill overflow-hidden border border-paper-white/20">
+              <iframe
+                src="https://www.youtube.com/embed/g5VLhIK_9CU?autoplay=1"
+                title="CreditPass Demo"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+                className="absolute inset-0 w-full h-full"
+              />
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
