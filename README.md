@@ -150,7 +150,7 @@ Open [http://localhost:3000](http://localhost:3000).
 
 A real borrow transaction issued via the CreditLender contract on Creditcoin testnet:
 
-![Loan transaction on Creditcoin Blockscout](loan.png)
+![Loan transaction on Creditcoin Blockscout](public/loan.png)
 
 [View transaction on Blockscout →](https://creditcoin-testnet.blockscout.com/tx/0xc14ca594562f7f1c58b966c18fc17b9036fa1a0bda2b72d5062e95c9f65e94fe)
 
