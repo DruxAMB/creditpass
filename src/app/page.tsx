@@ -321,25 +321,42 @@ export default function Home() {
   }
 
   async function handleConnectAndBorrow() {
-    setDemoMode(false);
-    // If wallet not connected, connect first
+    // If wallet not connected, try to connect first
     if (!walletAddress) {
       setWalletError(null);
       try {
         const eth = (window as unknown as { ethereum?: { request: (args: { method: string }) => Promise<string[]> } }).ethereum;
         if (!eth) {
-          setWalletError("No wallet detected. Please install MetaMask or Rainbow browser extension and refresh the page.");
+          // No wallet — enter demo mode instead of blocking
+          setDemoMode(true);
+          setHeroExiting(true);
+          setTimeout(() => {
+            setShowHero(false);
+            setHeroExiting(false);
+            setTimeout(() => {
+              dashboardRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+            }, 50);
+          }, 600);
           return;
         }
         await eth.request({ method: "eth_requestAccounts" });
         // Wait for wagmi to pick up the new connection
         await new Promise((r) => setTimeout(r, 500));
       } catch (err) {
-        const msg = friendlyError(err, "Connecting wallet");
-        setWalletError(msg);
+        // User rejected or failed — fall back to demo mode
+        setDemoMode(true);
+        setHeroExiting(true);
+        setTimeout(() => {
+          setShowHero(false);
+          setHeroExiting(false);
+          setTimeout(() => {
+            dashboardRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+          }, 50);
+        }, 600);
         return;
       }
     }
+    setDemoMode(false);
     // Then transition to dashboard
     setHeroExiting(true);
     setTimeout(() => {
@@ -687,15 +704,17 @@ export default function Home() {
               No oracle, no intermediary — just math.
             </p>
             <div className="mt-10 flex flex-col gap-3 sm:flex-row">
-              <button
-                onClick={handleDemo}
-                className="font-ui text-base uppercase tracking-[0.1em] px-6 py-2.5 pill bg-eclipse-green text-ink-black border border-ink-black hover:scale-105 transition-transform"
+              <a
+                href="https://youtu.be/g5VLhIK_9CU"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-ui text-base uppercase tracking-[0.1em] px-6 py-2.5 pill bg-eclipse-green text-ink-black border border-ink-black hover:scale-105 transition-transform text-center"
               >
-                Try the Demo
-              </button>
+                Demo Video
+              </a>
               <button
                 onClick={handleConnectAndBorrow}
-                disabled={!hasWallet || isConnectingWallet}
+                disabled={isConnectingWallet}
                 className="font-ui text-base uppercase tracking-[0.1em] px-6 py-2.5 pill bg-transparent text-paper-white border border-paper-white hover:bg-paper-white hover:text-ink-black transition-colors disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-paper-white"
               >
                 {isConnectingWallet ? (
@@ -703,15 +722,15 @@ export default function Home() {
                 ) : (
                   <Wallet className="h-4 w-4 inline mr-2" />
                 )}
-                {walletAddress ? "Enter Dashboard" : hasWallet ? "Connect & Borrow" : "No Wallet Found"}
+                {walletAddress ? "Enter Dashboard" : "Connect & Borrow"}
               </button>
             </div>
             <p className="mt-6 font-label text-xs text-paper-white/40 uppercase tracking-[0.2em]">
               {hasWallet
                 ? walletAddress
                   ? "Wallet connected — enter your dashboard"
-                  : "Demo uses sample data · Connect & Borrow uses your wallet"
-                : "No wallet detected · Try the Demo or install MetaMask/Rainbow"}
+                  : "Connect your wallet to borrow with your own address"
+                : "No wallet detected · Install MetaMask/Rainbow, or connect to try demo mode"}
             </p>
           </div>
 
@@ -746,27 +765,67 @@ export default function Home() {
       {/* Dashboard — only rendered after hero exit */}
       {!showHero && (
       <main ref={dashboardRef} className={`mx-auto max-w-[1200px] px-5 py-20 ${dashboardExiting ? "dashboard-exit" : "dashboard-enter"}`}>
-        {/* Back to hero */}
-        <button
-          onClick={() => {
-            setDashboardExiting(true);
-            setTimeout(() => {
-              setShowHero(true);
-              setHeroExiting(false);
-              setDashboardExiting(false);
-              setDemoMode(false);
-              setTxHashInput("");
-              setVerifyError(null);
-              setLoanError(null);
-              setLoanSuccess(null);
-              setLoadError(null);
-            }, 500);
-          }}
-          className="mb-10 inline-flex items-center gap-2 font-ui text-sm uppercase tracking-[0.1em] text-paper-white/60 hover:text-eclipse-green transition-colors"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Back to Home
-        </button>
+        {/* Dashboard header — Back to Home + mode toggle */}
+        <div className="mb-10 flex items-center justify-between">
+          <button
+            onClick={() => {
+              setDashboardExiting(true);
+              setTimeout(() => {
+                setShowHero(true);
+                setHeroExiting(false);
+                setDashboardExiting(false);
+                setDemoMode(false);
+                setTxHashInput("");
+                setVerifyError(null);
+                setLoanError(null);
+                setLoanSuccess(null);
+                setLoadError(null);
+              }, 500);
+            }}
+            className="inline-flex items-center gap-2 font-ui text-sm uppercase tracking-[0.1em] text-paper-white/60 hover:text-eclipse-green transition-colors"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back to Home
+          </button>
+
+          {/* Real / Demo mode toggle */}
+          <div className="flex items-center gap-1 p-1 pill border border-paper-white/20">
+            <button
+              onClick={() => {
+                if (demoMode) {
+                  setDemoMode(false);
+                  setCreditScore(0);
+                  setVerifiedRepayments(0);
+                  setTotalVerifiedAmount("0");
+                  setRepaymentHistory([]);
+                  setLoans([]);
+                  setHasImported(false);
+                }
+              }}
+              disabled={!demoMode}
+              className={`font-ui text-xs uppercase tracking-[0.1em] px-4 py-1.5 pill transition-colors ${!demoMode ? "bg-eclipse-green text-ink-black" : "text-paper-white/50 hover:text-paper-white"}`}
+            >
+              Real
+            </button>
+            <button
+              onClick={() => {
+                if (!demoMode) {
+                  setDemoMode(true);
+                  setCreditScore(0);
+                  setVerifiedRepayments(0);
+                  setTotalVerifiedAmount("0");
+                  setRepaymentHistory([]);
+                  setLoans([]);
+                  setHasImported(false);
+                }
+              }}
+              disabled={demoMode}
+              className={`font-ui text-xs uppercase tracking-[0.1em] px-4 py-1.5 pill transition-colors ${demoMode ? "bg-eclipse-green text-ink-black" : "text-paper-white/50 hover:text-paper-white"}`}
+            >
+              Demo
+            </button>
+          </div>
+        </div>
 
         {/* Error states */}
         {walletError && (
