@@ -22,6 +22,7 @@ const spaceMono = Space_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://creditpass.druxamb.dev"),
   title: "CreditPass | Cross-Chain Credit Passport",
   description: "Your repayment history on Ethereum is your credit score on Creditcoin — verified cryptographically via the Attestcoin Protocol. No oracle, no intermediary.",
   icons: {
