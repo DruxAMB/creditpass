@@ -3,7 +3,7 @@ import { ethers } from "ethers";
 import { CREDIT_LENDER_ABI } from "@/lib/abis";
 import { friendlyError } from "@/lib/errors";
 
-const CREDIT_LENDER_ADDRESS = "0x1A69795A4C0d957e47c240BAa8DbC1f5d91290F2";
+const CREDIT_LENDER_ADDRESS = "0x9620FeB1Da3F8c7FB8a71792ffacFe94A9C6976c";
 const CREDITCOIN_RPC = "https://rpc.cc3-testnet.creditcoin.network";
 const BORROWER_ADDRESS = "0x403aA1395c3E1221Cb14Fa10643063584f76c8ec";
 
