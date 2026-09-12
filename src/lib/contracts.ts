@@ -9,7 +9,7 @@ export const NETWORKS = {
   SEPOLIA: {
     chainId: "0xaa36a7",
     name: "Sepolia Testnet",
-    rpcUrl: `https://sepolia.infura.io/v3/${process.env.INFURA_API_KEY || "0a01199d41094205a22eb92865d61bf5"}`,
+    rpcUrl: `https://sepolia.infura.io/v3/${process.env.INFURA_API_KEY}`,
     explorer: "https://sepolia.etherscan.io",
   },
   CREDITCOIN: {

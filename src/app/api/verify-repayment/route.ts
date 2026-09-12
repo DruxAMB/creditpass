@@ -8,7 +8,7 @@ const SEPOLIA_CHAIN_KEY = 1;
 const PROOF_BUILDER_URL = "https://prover.cc3-testnet.creditcoin.network";
 const CREDITPASS_ADDRESS = "0x3e442bF5A50ddC63aE0fc0c683190CaCa5F00283";
 const CREDITCOIN_RPC = "https://rpc.cc3-testnet.creditcoin.network";
-const SEPOLIA_RPC = `https://sepolia.infura.io/v3/${process.env.INFURA_API_KEY || "0a01199d41094205a22eb92865d61bf5"}`;
+const SEPOLIA_RPC = `https://sepolia.infura.io/v3/${process.env.INFURA_API_KEY}`;
 
 export async function POST(request: NextRequest) {
   try {

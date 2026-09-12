@@ -19,11 +19,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const privateKey = (process.env.DEPLOYER_PRIVATE_KEY || "").trim();
+    if (!privateKey) {
+      return NextResponse.json(
+        { error: "Server is not configured to issue loans" },
+        { status: 500 }
+      );
+    }
+
     const provider = new ethers.JsonRpcProvider(CREDITCOIN_RPC);
-    const wallet = new ethers.Wallet(
-      (process.env.DEPLOYER_PRIVATE_KEY || "0x9a667145d476c98b74a52608457ca5ea99ded2a252cd5515743530fb76682e78").trim(),
-      provider
-    );
+    const wallet = new ethers.Wallet(privateKey, provider);
 
     const lender = new ethers.Contract(CREDIT_LENDER_ADDRESS, CREDIT_LENDER_ABI, wallet);
 
