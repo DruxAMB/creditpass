@@ -507,6 +507,23 @@ export default function Home() {
     setIsTakingLoan(true);
     setLoanError(null);
 
+    if (walletAddress) {
+      // Ask the wallet for its real chain — wagmi's chainId can desync on injected connectors
+      const eth = (window as unknown as { ethereum?: { request: (args: { method: string }) => Promise<string> } }).ethereum;
+      const hexChain = eth ? await eth.request({ method: "eth_chainId" }).catch(() => null) : null;
+      if (hexChain && parseInt(hexChain, 16) !== creditCoin3Testnet.id) {
+        await switchToCreditcoin();
+        announce("Switched to Creditcoin testnet — click Take Loan again to continue.");
+        setIsTakingLoan(false);
+        return;
+      }
+      if (!connectorClient) {
+        setLoanError("Wallet is still initializing — try again in a moment.");
+        setIsTakingLoan(false);
+        return;
+      }
+    }
+
     if (walletAddress && connectorClient) {
       // Client-side: user signs the tx with their own wallet via wagmi
       announce("Please confirm the loan transaction in your wallet...");
@@ -594,7 +611,7 @@ export default function Home() {
     } finally {
       setIsTakingLoan(false);
     }
-  }, [loanTerms.maxBorrow, walletAddress, connectorClient, demoMode]);
+  }, [loanTerms.maxBorrow, walletAddress, connectorClient, demoMode, switchToCreditcoin]);
 
   return (
     <div className="min-h-screen bg-ink-black text-ink-black">
@@ -1031,7 +1048,7 @@ export default function Home() {
                   <div className="mt-4 flex flex-col gap-3 sm:flex-row">
                     <button
                       onClick={handleTakeLoan}
-                      disabled={isTakingLoan || (walletAddress ? wrongChain : !demoMode)}
+                      disabled={isTakingLoan || (!walletAddress && !demoMode)}
                       className="flex-1 font-ui text-base uppercase tracking-[0.1em] px-6 py-3 pill bg-eclipse-green text-ink-black border border-ink-black hover:border-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {isTakingLoan ? (
@@ -1056,7 +1073,7 @@ export default function Home() {
                 {creditScore > 0 && (
                   <p className="mt-3 font-ui text-xs text-muted-foreground">
                     {walletAddress && wrongChain
-                      ? "Wrong network. Click \"Wrong Network\" in the header to switch to Creditcoin testnet."
+                      ? "Wrong network — taking a loan will prompt your wallet to switch to Creditcoin testnet."
                       : walletAddress
                         ? "You will sign the loan transaction with your connected wallet on Creditcoin testnet."
                         : demoMode
