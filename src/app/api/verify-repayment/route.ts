@@ -31,8 +31,17 @@ export async function POST(request: NextRequest) {
     // Get tx receipt from Sepolia
     const receipt = await sepoliaProvider.getTransactionReceipt(txHash);
     if (!receipt) {
+      const explorerUrl = `https://sepolia.etherscan.io/address/${borrower}`;
+      const ccReceipt = await creditcoinProvider
+        .getTransactionReceipt(txHash)
+        .catch(() => null);
       return NextResponse.json(
-        { error: "Transaction not found on Sepolia" },
+        {
+          error: ccReceipt
+            ? "That hash is a Creditcoin transaction, not a Sepolia repayment"
+            : "No Sepolia transaction with that hash",
+          explorerUrl,
+        },
         { status: 404 }
       );
     }

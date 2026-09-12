@@ -61,6 +61,7 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [verifyError, setVerifyError] = useState<string | null>(null);
+  const [verifyExplorerUrl, setVerifyExplorerUrl] = useState<string | null>(null);
   const [scoreAnimating, setScoreAnimating] = useState(false);
   const [showHero, setShowHero] = useState(true);
   const [heroExiting, setHeroExiting] = useState(false);
@@ -427,6 +428,7 @@ export default function Home() {
 
     setIsVerifying(true);
     setVerifyError(null);
+    setVerifyExplorerUrl(null);
     setVerificationSteps([
       { label: "Fetching Sepolia transaction data", status: "active" },
       { label: "Generating cross-chain proof via Attestcoin Protocol", status: "pending" },
@@ -458,6 +460,7 @@ export default function Home() {
       const data = await response.json();
 
       if (!response.ok) {
+        setVerifyExplorerUrl(data.explorerUrl ?? null);
         throw new Error(data.error || "Verification failed");
       }
 
@@ -511,7 +514,7 @@ export default function Home() {
         const provider = new ethers.BrowserProvider(connectorClient as unknown as ethers.Eip1193Provider);
         const signer = await provider.getSigner();
         const lender = new ethers.Contract(
-          "0x1A69795A4C0d957e47c240BAa8DbC1f5d91290F2",
+          "0x9620FeB1Da3F8c7FB8a71792ffacFe94A9C6976c",
           CREDIT_LENDER_ABI,
           signer
         );
@@ -776,6 +779,7 @@ export default function Home() {
                 setDemoMode(false);
                 setTxHashInput("");
                 setVerifyError(null);
+                setVerifyExplorerUrl(null);
                 setLoanError(null);
                 setLoanSuccess(null);
                 setLoadError(null);
@@ -862,8 +866,18 @@ export default function Home() {
             <div className="flex-1">
               <p className="font-ui text-sm font-bold uppercase tracking-wide">Verification Failed</p>
               <p className="font-ui text-sm text-muted-foreground">{verifyError}</p>
+              {verifyExplorerUrl && (
+                <a
+                  href={verifyExplorerUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-ui text-sm font-bold text-muted-foreground hove:text-ink-black hover:underline inline-flex items-center gap-1 mt-1"
+                >
+                  View your Sepolia transactions <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
+                </a>
+              )}
             </div>
-            <button onClick={() => setVerifyError(null)} className="font-ui text-xs uppercase tracking-[0.1em] px-3 py-1 pill border border-ink-black hover:bg-eclipse-green transition-colors">
+            <button onClick={() => { setVerifyError(null); setVerifyExplorerUrl(null); }} className="font-ui text-xs uppercase tracking-[0.1em] px-3 py-1 pill border border-ink-black hover:bg-eclipse-green transition-colors">
               Dismiss
             </button>
           </div>
@@ -976,6 +990,16 @@ export default function Home() {
                 <div className="mt-5">
                   <label htmlFor="txhash" className="eyebrow text-muted-foreground block mb-2">
                     {demoMode ? "Sepolia tx hash (optional — defaults to demo tx)" : "Sepolia tx hash (required)"}
+                  <span className="font-label text-xs text-muted-foreground mb-2">
+                    <a
+                      href={walletAddress ? `https://sepolia.etherscan.io/address/${walletAddress}` : "https://sepolia.etherscan.io"}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="underline underline-offset-2 inline-flex items-center gap-0.5 hover:text-ink-black"
+                    >
+                      Find yours on Etherscan <ExternalLink className="h-3 w-3" aria-hidden="true" />
+                    </a>
+                  </span>
                   </label>
                   <input
                     id="txhash"

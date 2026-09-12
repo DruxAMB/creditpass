@@ -77,9 +77,14 @@ export function friendlyError(error: unknown, context: string = ""): string {
     return "The Sepolia block containing this transaction hasn't been attested on Creditcoin yet. Please wait 5-10 minutes and try again.";
   }
 
+  // Wrong chain — hash exists on Creditcoin, not Sepolia (detected server-side)
+  if (combined.includes("Creditcoin transaction")) {
+    return "That hash is a Creditcoin transaction — the input must be the Sepolia repayment tx. Find your Sepolia transactions via the link below and copy a hash from there.";
+  }
+
   // Transaction not found on Sepolia
-  if (combined.includes("Transaction not found") || combined.includes("transaction not found")) {
-    return "Transaction not found on Sepolia. Check that you're using a valid Sepolia transaction hash.";
+  if (combined.includes("Transaction not found") || combined.includes("transaction not found") || combined.includes("No Sepolia transaction")) {
+    return "No transaction with that hash exists on Sepolia. Make sure you copied it from sepolia.etherscan.io — not the Creditcoin explorer.";
   }
 
   // Invalid address
